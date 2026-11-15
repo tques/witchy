@@ -144,6 +144,30 @@ def main():
         import copy
         rooms[rid] = scale_room(copy.deepcopy(dict({k: v for k, v in r.items() if k not in ('walls', 'fences', 'props')}, objects=objs)), WORLD_SCALE)
 
+    # outdoor rooms see their outdoor neighbours: line up each pair of linked exits, gate to gate
+    def edge_of(r, rect):
+        W, D = r['size']; cx, cz = (rect[0] + rect[2]) / 2, (rect[1] + rect[3]) / 2
+        d = {'N': cz, 'S': D - cz, 'W': cx, 'E': W - cx}
+        return min(d, key=d.get), cx, cz
+    for rid, r in ROOMS.items():
+        nbs = []
+        if r['floor']['style'] != 'wood':
+            for e in r['exits']:
+                other = ROOMS[e['to']]
+                back = next((f for f in other['exits'] if f['to'] == rid), None)
+                if other['floor']['style'] == 'wood' or not back:
+                    continue
+                ea, ex, ez = edge_of(r, e['rect']); eb, fx, fz = edge_of(other, back['rect'])
+                if {ea, eb} not in ({'N', 'S'}, {'E', 'W'}):
+                    continue
+                W, D = r['size']; W2, D2 = other['size']
+                off = {'S': (ex - fx, D), 'N': (ex - fx, -D2), 'E': (W, ez - fz), 'W': (-W2, ez - fz)}[ea]
+                nbs.append(dict(id=e['to'], off=[off[0] * WORLD_SCALE, off[1] * WORLD_SCALE]))
+        rooms[rid]['neighbors'] = nbs
+        rooms[rid]['id'] = rid
+        if nbs:
+            print(f'  {rid} sees ' + ', '.join(f"{n['id']} at ({n['off'][0] / WORLD_SCALE:g}, {n['off'][1] / WORLD_SCALE:g})" for n in nbs))
+
     data = dict(assets=assets, rooms=rooms, start='cottage')
     html = open(os.path.join(HERE, 'game_template.html')).read()
     html = html.replace('/*GAME_JS*/', open(os.path.join(HERE, 'game.js')).read())

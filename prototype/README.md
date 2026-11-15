@@ -51,6 +51,8 @@ python prototype/build_game.py
 
 **Movement.** Walking and running speeds come from the animation strides (played 1.4× and 1.25× faster in-game for pacing), so feet don't slide.
 
+**Neighbouring rooms.** Outdoor rooms are placed relative to each other by lining up each pair of linked exits, gate to gate (`build_game.py` prints the offsets). Past a room's edge you see the neighbour's real ground, paths, fences and props, at their true positions and lengths. They're for looking only: no clicks and no walking. A neighbour's fence covers only its own length, so the rest of a longer edge keeps that room's own border (the Field's tree line continues east of where the garden ends). Indoor rooms don't show neighbours.
+
 ## Adding a room
 
 1. Add an entry to `ROOMS` in `rooms.py`. Doors and windows must sit inside one 16-unit wall segment.

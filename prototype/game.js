@@ -68,35 +68,26 @@ function pickCamera() {
 
 // ------------------------------------------------------------------ floor painting (one texel per cube)
 function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
-function paintFloor(room) {
-  const [W, D] = room.size, outdoor = room.floor.style !== 'wood', M = outdoor ? 220 : 0, K = room.floor.scale || 1;
-  const c = document.createElement('canvas'); c.width = W + 2 * M; c.height = D + 2 * M;
-  const g = c.getContext('2d'), img = g.createImageData(c.width, c.height), d = img.data, r = rng(7);
-  const set = (x, y, col) => { if (x < 0 || y < 0 || x >= c.width || y >= c.height) return; const i = (y * c.width + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; };
-  const jit = (col, a) => { const k = (r() - 0.5) * a; return col.map(v => Math.max(0, Math.min(255, v + k))); };
-  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
-    const wx = x - M, wz = y - M, bx = Math.floor(wx / K), bz = Math.floor(wz / K);
-    let col;
-    if (room.floor.style === 'wood') {
-      const plank = Math.floor(bz / 8), seam = (wz % (8 * K)) < 1.5 || ((bx + plank * 23) % 40 === 0 && wx % K < 1.5);
-      col = seam ? [92, 62, 44] : jit([[150, 104, 70], [140, 96, 64], [158, 112, 76]][plank % 3], 10);
-    } else if (room.floor.style === 'grass') {
-      col = jit((((bx * 7 + bz * 13) ^ (bx * bz)) & 31) < 2 ? [120, 180, 96] : [96, 158, 84], 14);
-    } else if (room.floor.style === 'meadow') {
-      let h = Math.imul(bx * 73856093 ^ bz * 19349663, 2654435761) >>> 24;               // scattered, no visible pattern
-      col = h < 3 ? [240, 236, 220] : h < 5 ? [236, 200, 90] : jit(h < 40 ? [128, 188, 100] : [112, 176, 92], 14);   // daisies and buttercups
-    } else {
-      col = jit((((bx * 5 + bz * 11) ^ (bx * bz)) & 31) < 2 ? [92, 140, 84] : [70, 118, 74], 14);
-    }
-    if (room.floor.style === 'grass' && (wx < 0 || wz < 0 || wx >= W || wz >= D)) col = col.map(v => v * 0.82);   // beyond the fence
-    set(x, y, col);
+function groundColor(style, wx, wz, K, jit) {             // one texel of a room's ground, in that room's own coordinates
+  const bx = Math.floor(wx / K), bz = Math.floor(wz / K);
+  if (style === 'wood') {
+    const plank = Math.floor(bz / 8), seam = (((wz % (8 * K)) + 8 * K) % (8 * K)) < 1.5 || ((bx + plank * 23) % 40 === 0 && wx % K < 1.5);
+    return seam ? [92, 62, 44] : jit([[150, 104, 70], [140, 96, 64], [158, 112, 76]][((plank % 3) + 3) % 3], 10);
   }
+  if (style === 'grass') return jit((((bx * 7 + bz * 13) ^ (bx * bz)) & 31) < 2 ? [120, 180, 96] : [96, 158, 84], 14);
+  if (style === 'meadow') {
+    const h = Math.imul(bx * 73856093 ^ bz * 19349663, 2654435761) >>> 24;               // scattered, no visible pattern
+    return h < 3 ? [240, 236, 220] : h < 5 ? [236, 200, 90] : jit(h < 40 ? [128, 188, 100] : [112, 176, 92], 14);   // daisies and buttercups
+  }
+  return jit((((bx * 5 + bz * 11) ^ (bx * bz)) & 31) < 2 ? [92, 140, 84] : [70, 118, 74], 14);
+}
+function paintDecals(room, ox, oz, set, jit, K, r) {     // rugs, paths, clearings; (ox, oz) places a neighbour's decals
   for (const dc of room.floor.decals || []) {
     if (dc.kind === 'rug') {
       const [x0, z0, x1, z1] = dc.rect;
       for (let z = z0; z < z1; z++) for (let x = x0; x < x1; x++) {
         const e = Math.min(x - x0, x1 - 1 - x, z - z0, z1 - 1 - z);
-        set(x + M, z + M, e < 2 * K ? [200, 160, 70] : e < 4 * K ? [110, 60, 130] : ((Math.floor(x / K) + Math.floor(z / K)) % 8 < 1 ? [150, 100, 170] : jit([130, 80, 150], 8)));
+        set(x + ox, z + oz, e < 2 * K ? [200, 160, 70] : e < 4 * K ? [110, 60, 130] : ((Math.floor(x / K) + Math.floor(z / K)) % 8 < 1 ? [150, 100, 170] : jit([130, 80, 150], 8)));
       }
     } else if (dc.kind === 'path') {
       const pts = dc.points, w = dc.width / 2;
@@ -104,11 +95,11 @@ function paintFloor(room) {
         const [ax, az] = pts[i], [bx, bz] = pts[i + 1], len = Math.hypot(bx - ax, bz - az);
         for (let t = 0; t <= len; t += 1) {
           const px = ax + (bx - ax) * t / len, pz = az + (bz - az) * t / len;
-          for (let oz = -w; oz <= w; oz++) for (let ox = -w; ox <= w; ox++) if (ox * ox + oz * oz <= w * w) {
-            const x = Math.round(px + ox), z = Math.round(pz + oz);
-            const stone = ((Math.floor(x / (6 * K)) * 31 + Math.floor(z / (5 * K)) * 17) % 5);
-            const gap = x % (6 * K) < 1.5 || z % (5 * K) < 1.5;
-            set(x + M, z + M, gap ? [118, 104, 90] : jit([[168, 160, 150], [156, 150, 144], [176, 166, 152], [150, 144, 140], [162, 152, 140]][stone], 6));
+          for (let oz2 = -w; oz2 <= w; oz2++) for (let ox2 = -w; ox2 <= w; ox2++) if (ox2 * ox2 + oz2 * oz2 <= w * w) {
+            const x = Math.round(px + ox2), z = Math.round(pz + oz2);
+            const stone = ((Math.floor(x / (6 * K)) * 31 + Math.floor(z / (5 * K)) * 17) % 5 + 5) % 5;
+            const gap = ((x % (6 * K)) + 6 * K) % (6 * K) < 1.5 || ((z % (5 * K)) + 5 * K) % (5 * K) < 1.5;
+            set(x + ox, z + oz, gap ? [118, 104, 90] : jit([[168, 160, 150], [156, 150, 144], [176, 166, 152], [150, 144, 140], [162, 152, 140]][stone], 6));
           }
         }
       }
@@ -116,10 +107,31 @@ function paintFloor(room) {
       const [cx0, cz0] = dc.center;
       for (let z = cz0 - dc.radius; z <= cz0 + dc.radius; z++) for (let x = cx0 - dc.radius; x <= cx0 + dc.radius; x++) {
         const q = Math.hypot(x - cx0, (z - cz0) * 1.15) / dc.radius + (r() - 0.5) * 0.12;
-        if (q < 1) set(x + M, z + M, q < 0.8 ? jit([132, 110, 80], 10) : jit([110, 120, 78], 10));
+        if (q < 1) set(x + ox, z + oz, q < 0.8 ? jit([132, 110, 80], 10) : jit([110, 120, 78], 10));
       }
     }
   }
+}
+function paintFloor(room) {
+  const [W, D] = room.size, outdoor = room.floor.style !== 'wood', M = outdoor ? 220 : 0, K = room.floor.scale || 1;
+  const c = document.createElement('canvas'); c.width = W + 2 * M; c.height = D + 2 * M;
+  const g = c.getContext('2d'), img = g.createImageData(c.width, c.height), d = img.data, r = rng(7);
+  const set = (x, y, col) => { x += M; y += M; if (x < 0 || y < 0 || x >= c.width || y >= c.height) return; const i = (y * c.width + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; };
+  const jit = (col, a) => { const k = (r() - 0.5) * a; return col.map(v => Math.max(0, Math.min(255, v + k))); };
+  const nbs = (room.neighbors || []).map(n => ({ ...n, room: DATA.rooms[n.id] }));
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+    const wx = x - M, wz = y - M;
+    let col;
+    if (wx >= 0 && wz >= 0 && wx < W && wz < D) col = groundColor(room.floor.style, wx, wz, K, jit);
+    else {
+      const nb = nbs.find(n => wx >= n.off[0] && wz >= n.off[1] && wx < n.off[0] + n.room.size[0] && wz < n.off[1] + n.room.size[1]);
+      if (nb) col = groundColor(nb.room.floor.style, wx - nb.off[0], wz - nb.off[1], K, jit);      // the neighbouring room's own ground
+      else { col = groundColor(room.floor.style, wx, wz, K, jit); if (room.floor.style === 'grass') col = col.map(v => v * 0.82); }
+    }
+    set(wx, wz, col);
+  }
+  for (const nb of nbs) paintDecals(nb.room, nb.off[0], nb.off[1], set, jit, K, r);
+  paintDecals(room, 0, 0, set, jit, K, r);
   g.putImageData(img, 0, 0);
   return { canvas: c, M };
 }
@@ -244,6 +256,16 @@ function enterRoom(id, spawn, face) {
   S.objects = room.objects.map(o => Object.assign({}, o, { gone: id === 'forest' && o.asset === 'thorns' && S.flags.crystal }));
   for (const o of S.objects) if (o.swap && S.flags.crystal) o.asset = o.swap;
   S.npcs = (room.npcs || []).map(n => ({ ...n, x: n.pos[0], z: n.pos[1], heading: n.face, home: [...n.pos], anim: 'stand', phase: 0, path: [], wait: 1 + Math.random() * 2 }));
+  S.context = [];                                         // neighbours' fences, walls and props, seen past the edges
+  for (const nb of room.neighbors || []) {
+    const other = DATA.rooms[nb.id], M = 220, [W, D] = room.size;
+    for (const o of other.objects) {
+      const x = o.pos[0] + nb.off[0], z = o.pos[1] + nb.off[1];
+      if (x < -M || z < -M || x > W + M || z > D + M) continue;          // only what's near enough to see
+      if (other.id === 'forest' && o.asset === 'thorns' && S.flags.crystal) continue;
+      S.context.push({ asset: o.swap && S.flags.crystal && nb.id === 'forest' ? o.swap : o.asset, pos: [x, z], block: o.block, wall: o.wall });
+    }
+  }
   S.floor = paintFloor(room);
   S.grid = buildGrid(room);
   P.x = spawn[0]; P.z = spawn[1]; P.heading = face; P.path = []; P.anim = 'stand'; P.onArrive = null;
@@ -468,6 +490,10 @@ function render() {
     ctx.fillStyle = `rgba(230,210,140,${0.18 + 0.15 * p})`; ctx.beginPath(); ctx.ellipse(X, Y, 18 * k.S, 18 * k.S * k.sn, 0, 0, 7); ctx.fill();
   }
   const list = [];
+  for (const o of S.context) {                           // look-only scenery from neighbouring rooms
+    const depth = o.wall ? Math.min(...[o.pos[0] - o.block[0], o.pos[0] + o.block[0]].flatMap(x => [o.pos[1] - o.block[1], o.pos[1] + o.block[1]].map(z => proj(x, z)[2]))) : proj(o.pos[0], o.pos[1])[2];
+    list.push({ depth, obj: o, s: [o.asset, 0, o.pos[0], o.pos[1], 0, 0], wall: o.wall });
+  }
   for (const o of S.objects) {
     if (o.gone) continue;
     let depth;

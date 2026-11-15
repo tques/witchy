@@ -101,10 +101,9 @@ ROOMS = {
                dict(asset='mushroom', pos=(176, 40)), dict(asset='mushroom_big', pos=(181, 45)), dict(asset='mushroom', pos=(172, 47)),
                dict(asset='mushroom', pos=(58, 176)), dict(asset='mushroom', pos=(63, 181)),
                dict(asset='tree2', pos=(96, 66), block=(6, 6)), dict(asset='tree', pos=(236, 82), block=(6, 6)),
-               # tree edge along the far north side (clear of the door at x 42-66); low bushes on the cameras' sides
-               dict(asset='tree', pos=(100, 6), block=(6, 6)), dict(asset='tree2', pos=(140, 4), block=(6, 6)),
+               # north edge: the garden's fence borders x -16..160 (it is only 176 long); trees continue the edge east of it
                dict(asset='tree', pos=(182, 8), block=(6, 6)), dict(asset='tree2', pos=(226, 4), block=(6, 6)),
-               dict(asset='tree', pos=(268, 10), block=(6, 6)), dict(asset='bush2', pos=(14, 10), block=(9, 9)),
+               dict(asset='tree', pos=(268, 10), block=(6, 6)),
                dict(asset='bush', pos=(8, 70), block=(9, 9)), dict(asset='bush2', pos=(8, 128), block=(9, 9)),
                dict(asset='bush', pos=(272, 56), block=(9, 9)), dict(asset='bush2', pos=(272, 136), block=(9, 9)),
                dict(asset='bush', pos=(46, 186), block=(9, 9)), dict(asset='bush2', pos=(132, 188), block=(9, 9)),
