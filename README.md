@@ -81,7 +81,7 @@ The presets are tuned on the witch:
 | preset | frames, fps | stride | lift / heel kick | bob | lean | trail |
 |---|---|---|---|---|---|---|
 | walk | 8 @ 10 | 5.5 | 2.6 / 0 | +1 as feet pass | none | 0 |
-| run | 8 @ 14 | 7.5 | 4.5 / 2.5 | +2 in flight | 0.09 | 1 |
+| run | 8 @ 18 | 9 | 4.5 / 3 | +2 in flight | 0.09 | 1 |
 
 Ground speed is derived from the stride, so feet don't slide. To add a new gait (sneak, skip, march), add an entry to `PRESETS`.
 

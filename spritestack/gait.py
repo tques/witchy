@@ -19,7 +19,7 @@ import math
 PRESETS = {
     'walk': dict(frames=8, fps=10, stride=5.5, lift=2.6, kick=0.0, arm=2.5, prop_arm=1.2, arm_raise=0.0,
                  hem=2.0, hem_from=58, hem_span=18, bob='walk', lean=0.0, trail=0.0),
-    'run':  dict(frames=8, fps=14, stride=7.5, lift=4.5, kick=2.5, arm=4.0, prop_arm=2.0, arm_raise=1.5,
+    'run':  dict(frames=8, fps=18, stride=9.0, lift=4.5, kick=3.0, arm=4.0, prop_arm=2.0, arm_raise=1.5,
                  hem=3.0, hem_from=54, hem_span=22, bob='run', lean=0.09, trail=1.0),
 }
 

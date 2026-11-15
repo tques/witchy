@@ -87,8 +87,8 @@ Use `m.membrane()` (see `characters/fairy.py`).
   - the body rises 1 layer as the feet pass
   - arms swing opposite their legs, and a hand holding a prop swings about half as much
   - each hem half follows its leg
-- **Run** (8 frames at 14 fps):
-  - stride about 7.5, with a high knee lift and the back heel kicking up
+- **Run** (8 frames at 18 fps, about 2.5–3 times walking speed):
+  - stride about 9, with a high knee lift and the back heel kicking up
   - the body rises 2 layers in flight, when the legs are split, and is lowest at mid-stance
   - forward lean of 0.09, made by shifting whole layers, so brims stay level and no planks appear
   - arms pump harder, and the forward hand rises
