@@ -1,0 +1,653 @@
+<title>Room Planner</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: blueprint workbench. Left rail = rooms + room settings, centre = top-down plan canvas,
+   right rail = the selected marker. Stacks to one column on phones. */
+:root {
+  --bg: #eef0f6; --panel: #ffffff; --ink: #1d2236; --muted: #5d6482; --line: #d6dae8; --grid: #dfe3ef; --grid-major: #c5cbe0;
+  --floor: #f7f8fc; --accent: #5b4bd6; --accent-ink: #ffffff; --danger: #c03d4f; --focus: #8b7cf0;
+  --k-decoration: #2f9e6f; --k-furniture: #a26a2c; --k-npc: #2f74d0; --k-enemy: #d0413e; --k-item: #b38a00;
+  --k-door: #7a4fd0; --k-spawn: #0f8a9d; --k-camera: #3b3f58; --k-area: #2f9e9e; --k-path: #8a6d3b; --k-note: #8a8fa8;
+  --font-display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12131c; --panel: #1b1d2a; --ink: #e7e8f3; --muted: #a2a6c0; --line: #2e3145; --grid: #232637; --grid-major: #33374e;
+  --floor: #171925; --accent: #9d8cff; --accent-ink: #16131f; --danger: #ff7a8a; --focus: #b4a7ff;
+  --k-decoration: #4cc995; --k-furniture: #d79a57; --k-npc: #63a4ff; --k-enemy: #ff6b67; --k-item: #e2bd3b;
+  --k-door: #b08cff; --k-spawn: #3cc6d9; --k-camera: #c9cce0; --k-area: #4cc9c9; --k-path: #c9a46a; --k-note: #9aa0bd; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12131c; --panel: #1b1d2a; --ink: #e7e8f3; --muted: #a2a6c0; --line: #2e3145; --grid: #232637; --grid-major: #33374e;
+  --floor: #171925; --accent: #9d8cff; --accent-ink: #16131f; --danger: #ff7a8a; --focus: #b4a7ff;
+  --k-decoration: #4cc995; --k-furniture: #d79a57; --k-npc: #63a4ff; --k-enemy: #ff6b67; --k-item: #e2bd3b;
+  --k-door: #b08cff; --k-spawn: #3cc6d9; --k-camera: #c9cce0; --k-area: #4cc9c9; --k-path: #c9a46a; --k-note: #9aa0bd; color-scheme: dark }
+
+* { box-sizing: border-box }
+html, body { height: 100% }
+body { background: var(--bg); color: var(--ink); font: 14px/1.45 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px 20px }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; margin: 0; text-wrap: balance }
+h1 { font-size: 20px; letter-spacing: -.01em }
+h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-family: var(--font-body); font-weight: 600 }
+button, input, select, textarea { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums }
+
+header.top { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px }
+header.top .sub { color: var(--muted); font-size: 13px }
+.status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block }
+.status.ok i { background: var(--k-decoration) } .status.busy i { background: var(--k-item) } .status.err i { background: var(--danger) }
+
+.work { display: grid; grid-template-columns: 260px minmax(0, 1fr) 280px; gap: 12px; align-items: start }
+@media (max-width: 1100px) { .work { grid-template-columns: 240px minmax(0, 1fr) } .inspector { grid-column: 1 / -1 } }
+@media (max-width: 720px) { .work { grid-template-columns: minmax(0, 1fr) } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0 }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0 }
+.field label, .lbl { font-size: 12px; color: var(--muted) }
+input[type=text], input[type=number], select, textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; min-width: 0 }
+textarea { resize: vertical; min-height: 64px }
+.row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap } .row > * { flex: 1 1 0; min-width: 0 }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 6px 10px; white-space: nowrap }
+.btn:hover { border-color: var(--accent) }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600 }
+.btn.danger { color: var(--danger) } .btn.danger.armed { background: var(--danger); color: var(--panel); border-color: var(--danger) }
+.btn.small { padding: 3px 8px; font-size: 12px }
+
+.rooms { display: flex; flex-direction: column; gap: 4px }
+.room-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; border: 1px solid transparent; background: none; text-align: left; width: 100% }
+.room-item:hover { border-color: var(--line) } .room-item.on { border-color: var(--accent); background: var(--bg) }
+.room-item .meta { font-size: 11px; color: var(--muted) }
+
+.stage { display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.tools { display: flex; flex-wrap: wrap; gap: 6px }
+.tool { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 4px 10px 4px 6px; font-size: 13px }
+.tool .chip { width: 18px; height: 18px; border-radius: 50%; display: inline-grid; place-items: center; font: 600 10px/1 var(--font-mono); color: var(--panel) }
+.tool kbd { font: 11px var(--font-mono); color: var(--muted) }
+.tool.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset }
+.canvas-wrap { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; touch-action: none }
+canvas#plan { display: block; width: 100%; height: auto; cursor: crosshair }
+.hint { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px }
+.hint b { color: var(--ink); font-weight: 500 }
+
+.inspector .empty { color: var(--muted); font-size: 13px }
+.kind-badge { display: inline-flex; align-items: center; gap: 6px; font-weight: 600 }
+.kind-badge .chip { width: 12px; height: 12px; border-radius: 50% }
+.dial { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px }
+.dial button { height: 30px; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; font: 11px var(--font-mono) }
+.dial button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.dial span { display: grid; place-items: center; font: 10px var(--font-mono); color: var(--muted) }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden }
+.seg button { border: 0; background: var(--panel); padding: 4px 10px; font-size: 12px } .seg button + button { border-left: 1px solid var(--line) }
+.seg button.on { background: var(--accent); color: var(--accent-ink) }
+
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); width: min(760px, calc(100vw - 32px)); padding: 16px }
+dialog::backdrop { background: rgb(0 0 0 / .45) }
+dialog .bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; margin-bottom: 10px }
+dialog textarea { min-height: 50vh; font: 12px/1.5 var(--font-mono) }
+.note { font-size: 12px; color: var(--muted) }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<header class="top">
+  <div>
+    <h1>Room Planner</h1>
+    <div class="sub">Lay out rooms with text markers. Claude turns each marker into real props, characters and cameras.</div>
+  </div>
+  <div class="row" style="flex:0 1 auto;align-items:center">
+    <span class="status" id="status"><i></i><span>Starting…</span></span>
+    <button class="btn primary" id="briefBtn">Brief for Claude</button>
+  </div>
+</header>
+
+<div class="work">
+  <!-- left: project + room settings -->
+  <aside class="panel" aria-label="Rooms">
+    <div class="row" style="align-items:center"><h2>Rooms</h2><button class="btn small" id="addRoom" style="flex:0 0 auto">+ New room</button></div>
+    <div class="rooms" id="roomList"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:2px 0;width:100%">
+    <h2>This room</h2>
+    <div class="field"><label for="rName">Name</label><input type="text" id="rName"></div>
+    <div class="field"><label for="rPreset">Size</label>
+      <select id="rPreset"></select></div>
+    <div class="row" id="customSize">
+      <div class="field"><label for="rW">Width (east–west)</label><input type="number" id="rW" min="32" max="400" step="8"></div>
+      <div class="field"><label for="rD">Depth (north–south)</label><input type="number" id="rD" min="32" max="400" step="8"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="rSetting">Setting</label><select id="rSetting"><option value="interior">Indoors</option><option value="exterior">Outdoors</option></select></div>
+      <div class="field"><label for="rBound">Edges</label><select id="rBound"><option value="walls">Walls</option><option value="fence">Fence</option><option value="trees">Trees / hedges</option><option value="open">Open</option></select></div>
+    </div>
+    <div class="field"><label for="rFloor">Floor</label><input type="text" id="rFloor" placeholder="e.g. wooden planks, mossy flagstones"></div>
+    <div class="field"><label for="rNotes">Mood and notes for Claude</label><textarea id="rNotes" placeholder="e.g. Cosy but cluttered. Candlelight. The camera should feel like peeking in from a corner."></textarea></div>
+    <button class="btn danger" id="delRoom">Delete room</button>
+  </aside>
+
+  <!-- centre: tools + plan -->
+  <section class="stage" aria-label="Plan">
+    <div class="tools" id="tools"></div>
+    <div class="canvas-wrap"><canvas id="plan" width="900" height="620" tabindex="0" aria-label="Top-down room plan"></canvas></div>
+    <div class="hint" id="hint"></div>
+  </section>
+
+  <!-- right: selected marker -->
+  <aside class="panel inspector" id="inspector" aria-label="Selected marker"></aside>
+</div>
+
+<dialog id="briefDlg">
+  <div class="bar">
+    <h2 style="font-size:14px">Brief for Claude</h2>
+    <div class="seg" id="briefFmt"><button data-f="text" class="on">Readable</button><button data-f="json">JSON</button></div>
+  </div>
+  <p class="note" id="briefNote"></p>
+  <textarea id="briefText" readonly></textarea>
+  <div class="bar" style="margin:10px 0 0">
+    <div class="row" style="flex:0 1 auto">
+      <button class="btn" id="exportBtn">Save file</button>
+      <label class="btn" for="importFile" style="cursor:pointer">Load file</label>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <div class="row" style="flex:0 1 auto">
+      <button class="btn primary" id="copyBtn">Copy</button>
+      <button class="btn" id="closeBrief">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+// ------------------------------------------------------------ vocabulary
+// Units are the game's base units (rooms.py): the witch stands about 35 tall and 14 wide.
+// Facing: 0 = south (toward the bottom of the plan / the default camera), 90 = west, 180 = north, 270 = east.
+const KINDS = {
+  decoration: { name: 'Decoration', key: '1', glyph: 'D', hint: 'Pumpkin, vase, hanging herbs' },
+  furniture:  { name: 'Furniture',  key: '2', glyph: 'F', hint: 'Table, bookshelf, bed' },
+  npc:        { name: 'NPC',        key: '3', glyph: 'N', hint: 'Wizard, shopkeeper' },
+  enemy:      { name: 'Enemy',      key: '4', glyph: 'E', hint: 'Slime, bat swarm' },
+  item:       { name: 'Interactable', key: '5', glyph: 'I', hint: 'Chest, lever, spellbook' },
+  door:       { name: 'Door / exit', key: '6', glyph: '⇥', hint: 'Snaps to the nearest edge' },
+  spawn:      { name: 'Player start', key: '7', glyph: 'S', hint: 'Where she appears' },
+  camera:     { name: 'Camera',     key: '8', glyph: 'C', hint: 'Place it, then aim it' },
+  area:       { name: 'Area',       key: '9', glyph: 'A', hint: 'Drag: rug, pond, camera zone' },
+  path:       { name: 'Path',       key: '0', glyph: 'P', hint: 'Click points, double-click to end' },
+  note:       { name: 'Note',       key: 'n', glyph: '?', hint: 'Anything else for Claude' },
+};
+const SIZES = { S: 'Small', M: 'Medium', L: 'Large' };
+const RADIUS = { S: 3.5, M: 5.5, L: 8.5 };            // rough footprint radius, in units
+const PRESETS = [
+  { id: 'closet', name: 'Closet · 64 × 48', w: 64, d: 48 },
+  { id: 'small', name: 'Small room · 96 × 72', w: 96, d: 72 },
+  { id: 'cottage', name: 'Cottage room · 112 × 84', w: 112, d: 84 },
+  { id: 'medium', name: 'Medium · 128 × 96', w: 128, d: 96 },
+  { id: 'large', name: 'Large · 176 × 120', w: 176, d: 120 },
+  { id: 'hall', name: 'Long hall · 224 × 96', w: 224, d: 96 },
+  { id: 'yard', name: 'Courtyard · 208 × 160', w: 208, d: 160 },
+  { id: 'custom', name: 'Custom…', w: 0, d: 0 },
+];
+const DIRS = [['NW', 135], ['N', 180], ['NE', 225], ['W', 90], null, ['E', 270], ['SW', 45], ['S', 0], ['SE', 315]];
+const dirName = f => ['S', 'SW', 'W', 'NW', 'N', 'NE', 'E', 'SE'][Math.round((((f % 360) + 360) % 360) / 45) % 8];
+const HEIGHTS = { low: 26, medium: 32, high: 38 };
+
+const $ = id => document.getElementById(id);
+const cv = $('plan'), ctx = cv.getContext('2d');
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const uid = () => Math.random().toString(36).slice(2, 9);
+const slug = s => (s || 'room').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'room';
+
+// ------------------------------------------------------------ state
+let rooms = {};               // id -> room
+let current = null, sel = null, tool = 'select', draft = null, drag = null;
+let db = null, mode = 'local';
+const dirty = new Set();      // rooms with unsaved edits
+const writing = new Set();
+const timers = {};
+
+function newRoom(name) {
+  let id = slug(name), n = 2;
+  while (rooms[id]) id = slug(name) + '-' + n++;
+  return { id, name, preset: 'medium', size: [128, 96], setting: 'interior', boundary: 'walls', floor: '', notes: '', markers: [], updated: Date.now() };
+}
+const room = () => rooms[current];
+const marker = () => room() && room().markers.find(m => m.id === sel);
+
+// ------------------------------------------------------------ storage: shared db when available, else this browser
+function setStatus(kind, text) { const s = $('status'); s.className = 'status ' + kind; s.lastElementChild.textContent = text; }
+function saveLocal() { try { localStorage.setItem('roomPlanner.v1', JSON.stringify({ rooms, current })); } catch (e) {} }
+function loadLocal() { try { const v = JSON.parse(localStorage.getItem('roomPlanner.v1') || 'null'); if (v && v.rooms) { rooms = v.rooms; current = v.current; } } catch (e) {} }
+
+function touch(r = room()) {
+  if (!r) return;
+  r.updated = Date.now();
+  saveLocal();
+  if (mode !== 'db') { setStatus('ok', 'Saved in this browser'); return; }
+  dirty.add(r.id); setStatus('busy', 'Saving…');
+  clearTimeout(timers[r.id]); timers[r.id] = setTimeout(() => flush(r.id), 700);
+}
+async function flush(id) {
+  if (writing.has(id) || !rooms[id]) return;
+  writing.add(id); dirty.delete(id);
+  try { await db.collection('rooms').doc(id).set(JSON.parse(JSON.stringify(rooms[id]))); setStatus('ok', 'Saved · Claude can read it'); }
+  catch (e) {
+    if (e && e.code === 'invalid_argument') { setStatus('err', 'You can view these rooms but not change them'); }
+    else if (e && e.code === 'quota_exceeded') { setStatus('err', 'Storage is full. Delete unused rooms.'); }
+    else { dirty.add(id); setStatus('err', 'Not saved yet. Will retry.'); setTimeout(() => flush(id), 3000); }
+  } finally { writing.delete(id); if (dirty.has(id)) flush(id); }
+}
+async function removeRoom(id) {
+  delete rooms[id]; saveLocal();
+  if (mode === 'db') { try { await db.collection('rooms').doc(id).delete(); } catch (e) { setStatus('err', 'Could not delete from shared storage'); } }
+}
+
+async function connect() {
+  let api = null;
+  try { api = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { api = null; }
+  if (!api) { mode = 'local'; setStatus('ok', 'Saving in this browser'); if (!Object.keys(rooms).length) seedBlank(); renderAll(); return; }
+  db = api; mode = 'db'; setStatus('busy', 'Loading rooms…');
+  const timer = setTimeout(() => setStatus('err', 'Shared rooms can’t be reached yet'), 10000);
+  db.collection('rooms').onSnapshot(snap => {
+    if (!snap.metadata.fromCache) clearTimeout(timer);
+    const seen = {};
+    for (const d of snap.docs) {
+      const r = d.data(); seen[d.id] = true;
+      if (!dirty.has(d.id) && !writing.has(d.id)) rooms[d.id] = JSON.parse(JSON.stringify(r));
+    }
+    for (const id of Object.keys(rooms)) if (!seen[id] && !dirty.has(id) && !writing.has(id) && !snap.metadata.fromCache && !pendingNew.has(id)) delete rooms[id];
+    if (!Object.keys(rooms).length && !snap.metadata.fromCache) seedBlank();
+    if (!rooms[current]) current = Object.keys(rooms)[0] || null;
+    if (!snap.metadata.fromCache) setStatus('ok', 'Synced · Claude can read these rooms');
+    renderAll();
+  }, e => { clearTimeout(timer); setStatus('err', 'Shared storage stopped. Changes stay in this browser.'); mode = 'local'; });
+}
+const pendingNew = new Set();
+function seedBlank() { const r = newRoom('First room'); rooms[r.id] = r; current = r.id; pendingNew.add(r.id); }
+
+// ------------------------------------------------------------ geometry: plan view fitted into the canvas
+let view = { s: 4, ox: 40, oy: 40 };
+function fit() {
+  const r = room(); if (!r) return;
+  const wrap = cv.parentElement, W = Math.max(320, wrap.clientWidth), dpr = Math.min(2, window.devicePixelRatio || 1);
+  const aspect = r.size[1] / r.size[0], H = Math.round(Math.min(Math.max(W * aspect + 110, 300), 780));
+  cv.style.height = H + 'px'; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const pad = 46, s = Math.min((W - pad * 2) / r.size[0], (H - pad * 2 - 20) / r.size[1]);
+  view = { s: s * dpr, ox: (W - r.size[0] * s) / 2 * dpr, oy: ((H - 20 - r.size[1] * s) / 2) * dpr, dpr };
+}
+const toScreen = (x, z) => [view.ox + x * view.s, view.oy + z * view.s];
+function toWorld(e) {
+  const b = cv.getBoundingClientRect(), dpr = view.dpr;
+  return [((e.clientX - b.left) * dpr - view.ox) / view.s, ((e.clientY - b.top) * dpr - view.oy) / view.s];
+}
+const snap = v => Math.round(v / 2) * 2;
+const clampIn = (x, z) => { const r = room(); return [Math.max(0, Math.min(r.size[0], x)), Math.max(0, Math.min(r.size[1], z))]; };
+function edgeSnap(x, z) {                     // doors live on the nearest edge
+  const [W, D] = room().size, d = { N: z, S: D - z, W: x, E: W - x };
+  const edge = Object.keys(d).sort((a, b) => d[a] - d[b])[0];
+  return edge === 'N' ? { edge, x: snap(x), z: 0 } : edge === 'S' ? { edge, x: snap(x), z: D } : edge === 'W' ? { edge, x: 0, z: snap(z) } : { edge, x: W, z: snap(z) };
+}
+
+// ------------------------------------------------------------ drawing
+function drawPlan() {
+  const r = room(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!r) return;
+  const s = view.s, dpr = view.dpr, [W, D] = r.size;
+  const [x0, y0] = toScreen(0, 0);
+  ctx.fillStyle = css('--floor'); ctx.fillRect(x0, y0, W * s, D * s);
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= W; x += 8) { ctx.strokeStyle = x % 16 ? css('--grid') : css('--grid-major'); ctx.beginPath(); ctx.moveTo(x0 + x * s + .5, y0); ctx.lineTo(x0 + x * s + .5, y0 + D * s); ctx.stroke(); }
+  for (let z = 0; z <= D; z += 8) { ctx.strokeStyle = z % 16 ? css('--grid') : css('--grid-major'); ctx.beginPath(); ctx.moveTo(x0, y0 + z * s + .5); ctx.lineTo(x0 + W * s, y0 + z * s + .5); ctx.stroke(); }
+  // edges
+  ctx.strokeStyle = css('--ink'); ctx.lineWidth = r.boundary === 'walls' ? 4 * dpr : 2 * dpr;
+  ctx.setLineDash(r.boundary === 'fence' ? [6 * dpr, 4 * dpr] : r.boundary === 'trees' ? [2 * dpr, 5 * dpr] : r.boundary === 'open' ? [1 * dpr, 9 * dpr] : []);
+  ctx.strokeRect(x0, y0, W * s, D * s); ctx.setLineDash([]);
+  // compass + scale
+  ctx.fillStyle = css('--muted'); ctx.font = `${11 * dpr}px ${css('--font-mono')}`; ctx.textAlign = 'center';
+  ctx.fillText('N', x0 + W * s / 2, y0 - 12 * dpr); ctx.fillText('S', x0 + W * s / 2, y0 + D * s + 20 * dpr);
+  ctx.textAlign = 'right'; ctx.fillText('W', x0 - 8 * dpr, y0 + D * s / 2 + 4 * dpr); ctx.textAlign = 'left'; ctx.fillText('E', x0 + W * s + 8 * dpr, y0 + D * s / 2 + 4 * dpr);
+  // witch footprint for scale, then the caption
+  ctx.strokeStyle = css('--muted'); ctx.setLineDash([3 * dpr, 3 * dpr]); ctx.beginPath(); ctx.arc(x0 + 7 * s, y0 + D * s + 9 * s, 7 * s, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  ctx.textAlign = 'left'; ctx.fillText(`← witch · ${W} × ${D} · grid 8`, x0 + 14 * s + 8 * dpr, y0 + D * s + 9 * s + 4 * dpr);
+
+  const order = ['area', 'path', 'camera', 'door', 'note', 'decoration', 'furniture', 'item', 'enemy', 'npc', 'spawn'];
+  const ms = [...r.markers].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
+  for (const m of ms) drawMarker(m, m.id === sel);
+  if (draft && draft.kind === 'path') drawPath(draft.points, 'path', true, draft.hover);
+  if (draft && draft.kind === 'area' && draft.b) drawArea({ x: Math.min(draft.a[0], draft.b[0]), z: Math.min(draft.a[1], draft.b[1]), w: Math.abs(draft.b[0] - draft.a[0]), d: Math.abs(draft.b[1] - draft.a[1]), kind: 'area', label: '' }, true);
+}
+function kcol(k) { return css('--k-' + k); }
+function labelAt(text, X, Y, color, bold) {
+  if (!text) return;
+  const dpr = view.dpr; ctx.font = `${bold ? 600 : 500} ${12 * dpr}px ${css('--font-body')}`; ctx.textAlign = 'center';
+  const w = ctx.measureText(text).width + 8 * dpr;
+  ctx.fillStyle = css('--panel'); ctx.globalAlpha = .85; ctx.fillRect(X - w / 2, Y - 11 * dpr, w, 15 * dpr); ctx.globalAlpha = 1;
+  ctx.fillStyle = color; ctx.fillText(text, X, Y);
+}
+function drawArea(m, on) {
+  const [X, Y] = toScreen(m.x, m.z), c = kcol('area');
+  ctx.fillStyle = c; ctx.globalAlpha = .14; ctx.fillRect(X, Y, m.w * view.s, m.d * view.s); ctx.globalAlpha = 1;
+  ctx.strokeStyle = c; ctx.lineWidth = (on ? 2.5 : 1.5) * view.dpr; ctx.setLineDash(on ? [] : [5 * view.dpr, 4 * view.dpr]);
+  ctx.strokeRect(X, Y, m.w * view.s, m.d * view.s); ctx.setLineDash([]);
+  labelAt(m.label || 'Area', X + m.w * view.s / 2, Y + m.d * view.s / 2 + 4 * view.dpr, css('--ink'), on);
+  if (on) { ctx.fillStyle = c; const [hx, hy] = toScreen(m.x + m.w, m.z + m.d); ctx.fillRect(hx - 5 * view.dpr, hy - 5 * view.dpr, 10 * view.dpr, 10 * view.dpr); }
+}
+function drawPath(pts, kind, on, hover, width = 10, label) {
+  if (!pts.length) return;
+  const c = kcol('path'), all = hover ? [...pts, hover] : pts;
+  ctx.strokeStyle = c; ctx.globalAlpha = .25; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = width * view.s;
+  ctx.beginPath(); all.forEach((p, i) => { const [X, Y] = toScreen(...p); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.stroke();
+  ctx.globalAlpha = 1; ctx.lineWidth = (on ? 2.5 : 1.5) * view.dpr; ctx.stroke();
+  for (const p of pts) { const [X, Y] = toScreen(...p); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(X, Y, (on ? 5 : 3) * view.dpr, 0, 7); ctx.fill(); }
+  if (label) { const mid = pts[Math.floor((pts.length - 1) / 2)], nxt = pts[Math.min(pts.length - 1, Math.floor((pts.length - 1) / 2) + 1)]; const [X, Y] = toScreen((mid[0] + nxt[0]) / 2, (mid[1] + nxt[1]) / 2); labelAt(label, X, Y - 8 * view.dpr, css('--ink'), on); }
+}
+function drawMarker(m, on) {
+  const dpr = view.dpr, c = kcol(m.kind);
+  if (m.kind === 'area') return drawArea(m, on);
+  if (m.kind === 'path') return drawPath(m.points, 'path', on, null, m.width || 10, m.label || 'Path');
+  const [X, Y] = toScreen(m.x, m.z);
+  if (m.kind === 'door') {
+    const half = (m.width || 12) / 2 * view.s, horiz = m.edge === 'N' || m.edge === 'S';
+    ctx.strokeStyle = c; ctx.lineWidth = (on ? 9 : 7) * dpr; ctx.lineCap = 'butt';
+    ctx.beginPath(); horiz ? (ctx.moveTo(X - half, Y), ctx.lineTo(X + half, Y)) : (ctx.moveTo(X, Y - half), ctx.lineTo(X, Y + half)); ctx.stroke();
+    const off = 18 * dpr, ly = m.edge === 'N' ? Y + off + 4 * dpr : m.edge === 'S' ? Y - off + 4 * dpr : Y + 4 * dpr;
+    const lx = m.edge === 'W' ? X + off + 30 * dpr : m.edge === 'E' ? X - off - 30 * dpr : X;
+    labelAt((m.label || 'Door') + (m.to ? ' → ' + (rooms[m.to] ? rooms[m.to].name : m.to) : ''), lx, ly, css('--ink'), on);
+    return;
+  }
+  if (m.kind === 'camera') {                  // view cone toward its facing
+    const f = (m.face || 0) * Math.PI / 180, vx = -Math.sin(f), vz = Math.cos(f), L = 40 * view.s, spread = 0.45;
+    ctx.fillStyle = c; ctx.globalAlpha = .12; ctx.beginPath(); ctx.moveTo(X, Y);
+    for (const a of [-spread, spread]) { const ca = Math.cos(a), sa = Math.sin(a); ctx.lineTo(X + (vx * ca - vz * sa) * L, Y + (vx * sa + vz * ca) * L); }
+    ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = c; ctx.fillRect(X - 7 * dpr, Y - 5 * dpr, 14 * dpr, 10 * dpr);
+    ctx.strokeStyle = c; ctx.lineWidth = 2 * dpr; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + vx * 16 * view.s, Y + vz * 16 * view.s); ctx.stroke();
+    if (on) { const [hx, hy] = [X + vx * 16 * view.s, Y + vz * 16 * view.s]; ctx.beginPath(); ctx.arc(hx, hy, 6 * dpr, 0, 7); ctx.fill(); }
+    labelAt(m.label || 'Camera', X, Y + 22 * dpr, css('--ink'), on);
+    return;
+  }
+  const r = Math.max(7 * dpr, RADIUS[m.size || 'M'] * view.s);
+  ctx.fillStyle = c; ctx.globalAlpha = m.kind === 'note' ? .55 : .9;
+  ctx.beginPath(); m.kind === 'note' ? ctx.rect(X - r * .8, Y - r * .8, r * 1.6, r * 1.6) : ctx.arc(X, Y, r, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  if (on) { ctx.strokeStyle = css('--accent'); ctx.lineWidth = 3 * dpr; ctx.beginPath(); ctx.arc(X, Y, r + 4 * dpr, 0, 7); ctx.stroke(); }
+  if (m.kind !== 'note' && m.face != null) {   // facing tick
+    const f = m.face * Math.PI / 180; ctx.strokeStyle = css('--panel'); ctx.lineWidth = 2.5 * dpr;
+    ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X - Math.sin(f) * r, Y + Math.cos(f) * r); ctx.stroke();
+  }
+  ctx.fillStyle = css('--panel'); ctx.font = `600 ${11 * dpr}px ${css('--font-mono')}`; ctx.textAlign = 'center';
+  ctx.fillText(KINDS[m.kind].glyph, X, Y - (m.face != null && m.kind !== 'note' ? 0 : 0) + 4 * dpr);
+  labelAt(m.label || KINDS[m.kind].name, X, Y + r + 15 * dpr, css('--ink'), on);
+}
+
+// ------------------------------------------------------------ hit testing
+function hit(x, z) {
+  const r = room(); if (!r) return null; const tol = 10 / (view.s / view.dpr);
+  const order = ['spawn', 'npc', 'enemy', 'item', 'furniture', 'decoration', 'note', 'door', 'camera', 'path', 'area'];
+  const ms = [...r.markers].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
+  for (const m of ms) {
+    if (m.kind === 'area') {
+      if (m.id === sel && Math.hypot(x - (m.x + m.w), z - (m.z + m.d)) < tol) return { m, part: 'resize' };
+      if (x >= m.x && x <= m.x + m.w && z >= m.z && z <= m.z + m.d) return { m, part: 'body' };
+    } else if (m.kind === 'path') {
+      for (let i = 0; i < m.points.length; i++) if (Math.hypot(x - m.points[i][0], z - m.points[i][1]) < tol) return { m, part: 'point', i };
+      for (let i = 0; i < m.points.length - 1; i++) { const [ax, az] = m.points[i], [bx, bz] = m.points[i + 1], L = Math.hypot(bx - ax, bz - az) || 1, t = Math.max(0, Math.min(1, ((x - ax) * (bx - ax) + (z - az) * (bz - az)) / (L * L))); if (Math.hypot(x - ax - t * (bx - ax), z - az - t * (bz - az)) < (m.width || 10) / 2 + tol / 2) return { m, part: 'body' }; }
+    } else if (m.kind === 'camera') {
+      const f = (m.face || 0) * Math.PI / 180, hx = m.x - Math.sin(f) * 16, hz = m.z + Math.cos(f) * 16;
+      if (m.id === sel && Math.hypot(x - hx, z - hz) < tol) return { m, part: 'aim' };
+      if (Math.hypot(x - m.x, z - m.z) < tol) return { m, part: 'body' };
+    } else if (m.kind === 'door') {
+      const half = (m.width || 12) / 2, horiz = m.edge === 'N' || m.edge === 'S';
+      if (horiz ? Math.abs(x - m.x) < half + tol / 2 && Math.abs(z - m.z) < tol * 2 : Math.abs(z - m.z) < half + tol / 2 && Math.abs(x - m.x) < tol * 2) return { m, part: 'body' };
+    } else if (Math.hypot(x - m.x, z - m.z) < Math.max(RADIUS[m.size || 'M'], tol)) return { m, part: 'body' };
+  }
+  return null;
+}
+
+// ------------------------------------------------------------ placing and editing
+function place(kind, x, z) {
+  const r = room(); [x, z] = clampIn(snap(x), snap(z));
+  const m = { id: uid(), kind, label: '', details: '' };
+  if (kind === 'door') Object.assign(m, edgeSnap(x, z), { width: 12, to: '' });
+  else if (kind === 'camera') Object.assign(m, { x, z, face: z > r.size[1] / 2 ? (x > r.size[0] / 2 ? 135 + 0 : 225) : 0, height: 'medium' });
+  else Object.assign(m, { x, z, size: kind === 'furniture' ? 'L' : 'M', face: ['npc', 'enemy', 'spawn', 'furniture'].includes(kind) ? 0 : null });
+  if (kind === 'camera') { const cx = r.size[0] / 2, cz = r.size[1] / 2; m.face = Math.round(Math.atan2(-(cx - x), cz - z) * 180 / Math.PI / 45) * 45; m.face = ((m.face % 360) + 360) % 360; }
+  r.markers.push(m); sel = m.id; touch(); renderAll(); focusLabel();
+}
+function focusLabel() { const l = $('mLabel'); if (l) { l.focus(); l.select(); } }
+
+cv.addEventListener('pointerdown', e => {
+  if (!room()) return;
+  cv.setPointerCapture(e.pointerId);
+  const [x, z] = toWorld(e);
+  if (tool === 'area') { draft = { kind: 'area', a: clampIn(snap(x), snap(z)), b: null }; return; }
+  if (tool === 'path') {
+    const p = clampIn(snap(x), snap(z));
+    if (!draft) draft = { kind: 'path', points: [p] };
+    else if (e.detail >= 2) finishPath(); else draft.points.push(p);
+    drawPlan(); return;
+  }
+  if (tool !== 'select') { e.preventDefault(); place(tool, x, z); if (!e.shiftKey) setTool('select'); focusLabel(); return; }   // keep focus in the label box
+  const h = hit(x, z);
+  sel = h ? h.m.id : null;
+  if (h) drag = { h, start: [x, z], orig: JSON.parse(JSON.stringify(h.m)), moved: false };
+  renderInspector(); drawPlan();
+});
+cv.addEventListener('pointermove', e => {
+  if (!room()) return;
+  const [x, z] = toWorld(e);
+  if (draft && draft.kind === 'area' && draft.a) { draft.b = clampIn(snap(x), snap(z)); drawPlan(); return; }
+  if (draft && draft.kind === 'path') { draft.hover = clampIn(snap(x), snap(z)); drawPlan(); return; }
+  if (!drag) { const h = tool === 'select' && hit(x, z); cv.style.cursor = tool !== 'select' ? 'crosshair' : h ? (h.part === 'resize' ? 'nwse-resize' : h.part === 'aim' ? 'alias' : 'move') : 'default'; return; }
+  const { h, start, orig } = drag, m = h.m, dx = x - start[0], dz = z - start[1];
+  if (Math.hypot(dx, dz) > 0.5) drag.moved = true;
+  if (h.part === 'resize') { m.w = Math.max(4, snap(orig.w + dx)); m.d = Math.max(4, snap(orig.d + dz)); }
+  else if (h.part === 'aim') { m.face = ((Math.round(Math.atan2(-(x - m.x), z - m.z) * 180 / Math.PI) % 360) + 360) % 360; }
+  else if (h.part === 'point') { m.points[h.i] = clampIn(snap(orig.points[h.i][0] + dx), snap(orig.points[h.i][1] + dz)); }
+  else if (m.kind === 'path') { m.points = orig.points.map(p => clampIn(snap(p[0] + dx), snap(p[1] + dz))); }
+  else if (m.kind === 'door') Object.assign(m, edgeSnap(...clampIn(orig.x + dx, orig.z + dz)));
+  else if (m.kind === 'area') { m.x = snap(Math.max(0, Math.min(room().size[0] - m.w, orig.x + dx))); m.z = snap(Math.max(0, Math.min(room().size[1] - m.d, orig.z + dz))); }
+  else [m.x, m.z] = clampIn(snap(orig.x + dx), snap(orig.z + dz));
+  drawPlan();
+});
+cv.addEventListener('pointerup', () => {
+  if (draft && draft.kind === 'area') {
+    if (draft.b && Math.abs(draft.b[0] - draft.a[0]) >= 4 && Math.abs(draft.b[1] - draft.a[1]) >= 4) {
+      const m = { id: uid(), kind: 'area', label: '', details: '', x: Math.min(draft.a[0], draft.b[0]), z: Math.min(draft.a[1], draft.b[1]), w: Math.abs(draft.b[0] - draft.a[0]), d: Math.abs(draft.b[1] - draft.a[1]) };
+      room().markers.push(m); sel = m.id; touch(); setTool('select');
+    }
+    draft = null; renderAll(); focusLabel(); return;
+  }
+  if (drag && drag.moved) { touch(); renderInspector(); }     // keep the label box (and its focus) otherwise
+  drag = null;
+});
+function finishPath() {
+  if (draft && draft.points.length >= 2) { const m = { id: uid(), kind: 'path', label: '', details: '', points: draft.points, width: 10 }; room().markers.push(m); sel = m.id; touch(); }
+  draft = null; setTool('select'); renderAll(); focusLabel();
+}
+cv.addEventListener('keydown', e => {
+  const m = marker();
+  if ((e.key === 'Delete' || e.key === 'Backspace') && m) { e.preventDefault(); deleteMarker(); }
+  else if (e.key === 'Enter' && draft) finishPath();
+  else if (m && e.key.startsWith('Arrow') && m.x != null) {
+    e.preventDefault(); const st = e.shiftKey ? 8 : 2;
+    if (e.key === 'ArrowLeft') m.x -= st; if (e.key === 'ArrowRight') m.x += st; if (e.key === 'ArrowUp') m.z -= st; if (e.key === 'ArrowDown') m.z += st;
+    if (m.kind === 'door') Object.assign(m, edgeSnap(...clampIn(m.x, m.z))); else [m.x, m.z] = clampIn(m.x, m.z);
+    touch(); drawPlan(); renderInspector();
+  } else if (m && (e.key === 'r' || e.key === 'R') && m.face != null) { m.face = (m.face + (e.shiftKey ? 315 : 45)) % 360; touch(); drawPlan(); renderInspector(); }
+});
+addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea, select')) return;
+  if (e.key === 'Escape') { draft = null; setTool('select'); drawPlan(); return; }
+  if (e.key === 'v' || e.key === 'V') return setTool('select');
+  for (const [k, v] of Object.entries(KINDS)) if (e.key === v.key) { setTool(k); cv.focus(); return; }
+});
+function deleteMarker() { const r = room(); r.markers = r.markers.filter(x => x.id !== sel); sel = null; touch(); renderAll(); }
+
+// ------------------------------------------------------------ panels
+function setTool(t) {
+  if (t !== 'path' && draft && draft.kind === 'path') draft = null;
+  tool = t; renderTools();
+  const k = KINDS[t];
+  $('hint').innerHTML = t === 'select'
+    ? '<span><b>Click</b> a marker to edit it</span><span><b>Drag</b> to move</span><span><b>R</b> turns it</span><span><b>Delete</b> removes it</span><span><b>1–0, N</b> pick a marker</span>'
+    : t === 'path' ? '<span><b>Click</b> to add points</span><span><b>Double-click</b> or <b>Enter</b> to finish</span><span><b>Esc</b> cancels</span>'
+    : t === 'area' ? '<span><b>Drag</b> a rectangle</span><span>Rugs, ponds, gardens, camera zones</span><span><b>Esc</b> cancels</span>'
+    : `<span><b>Click</b> the plan to place: ${k.hint}</span><span><b>Shift-click</b> places several</span><span><b>Esc</b> cancels</span>`;
+}
+function renderTools() {
+  const el = $('tools'); el.innerHTML = '';
+  const b = document.createElement('button'); b.className = 'tool' + (tool === 'select' ? ' on' : ''); b.innerHTML = `<span class="chip" style="background:var(--ink)">↖</span>Select <kbd>V</kbd>`; b.onclick = () => setTool('select'); el.appendChild(b);
+  for (const [k, v] of Object.entries(KINDS)) {
+    const t = document.createElement('button'); t.className = 'tool' + (tool === k ? ' on' : ''); t.title = v.hint;
+    t.innerHTML = `<span class="chip" style="background:var(--k-${k})">${v.glyph}</span>${v.name} <kbd>${v.key.toUpperCase()}</kbd>`;
+    t.onclick = () => { setTool(k); cv.focus(); }; el.appendChild(t);
+  }
+}
+function renderRooms() {
+  const el = $('roomList'); el.innerHTML = '';
+  for (const r of Object.values(rooms).sort((a, b) => (a.name || '').localeCompare(b.name || ''))) {
+    const b = document.createElement('button'); b.className = 'room-item' + (r.id === current ? ' on' : '');
+    const n = document.createElement('span'); n.textContent = r.name || r.id;
+    const meta = document.createElement('span'); meta.className = 'meta mono'; meta.textContent = `${r.size[0]}×${r.size[1]} · ${r.markers.length}`;
+    b.append(n, meta); b.onclick = () => { current = r.id; sel = null; draft = null; saveLocal(); renderAll(); };
+    el.appendChild(b);
+  }
+}
+function renderRoomForm() {
+  const r = room(); const dis = !r;
+  for (const id of ['rName', 'rPreset', 'rW', 'rD', 'rSetting', 'rBound', 'rFloor', 'rNotes', 'delRoom']) $(id).disabled = dis;
+  if (!r) return;
+  $('rName').value = r.name; $('rPreset').value = r.preset || 'custom'; $('rW').value = r.size[0]; $('rD').value = r.size[1];
+  $('customSize').hidden = (r.preset || 'custom') !== 'custom';
+  $('rSetting').value = r.setting; $('rBound').value = r.boundary; $('rFloor').value = r.floor || ''; $('rNotes').value = r.notes || '';
+}
+function renderInspector() {
+  const el = $('inspector'), m = marker();
+  if (!m) {
+    const r = room();
+    el.innerHTML = `<h2>Marker</h2><p class="empty">Pick a marker type above and click the plan. Then name it here: “Pumpkin”, “Old wizard”, “Door to the cellar”.</p>`
+      + (r ? `<p class="empty mono">${r.markers.length} marker${r.markers.length === 1 ? '' : 's'} in this room</p>` : '');
+    return;
+  }
+  const k = KINDS[m.kind], rs = Object.values(rooms).filter(r => r.id !== current);
+  const where = m.kind === 'path' ? `${m.points.length} points` : m.kind === 'area' ? `x ${m.x}, z ${m.z} · ${m.w} × ${m.d}` : m.kind === 'door' ? `${m.edge} edge at ${m.edge === 'N' || m.edge === 'S' ? 'x ' + m.x : 'z ' + m.z}` : `x ${m.x}, z ${m.z}`;
+  el.innerHTML = `
+    <div class="row" style="align-items:center"><span class="kind-badge"><span class="chip" style="background:var(--k-${m.kind})"></span>${k.name}</span>
+      <span class="mono note" style="text-align:right">${where}</span></div>
+    <div class="field"><label for="mLabel">What is it?</label><input type="text" id="mLabel" placeholder="${k.hint.split(',')[0]}"></div>
+    <div class="field"><label for="mDetails">Details for Claude</label><textarea id="mDetails" placeholder="${m.kind === 'npc' ? 'Personality, what they say, quest role' : m.kind === 'item' ? 'What happens when clicked' : m.kind === 'camera' ? 'What this shot should show' : 'Colour, style, anything specific'}"></textarea></div>
+    ${m.kind === 'door' ? `<div class="row"><div class="field"><label for="mTo">Leads to</label><select id="mTo"><option value="">Not linked yet</option>${rs.map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select></div>
+      <div class="field" style="flex:0 0 90px"><label for="mWidth">Width</label><input type="number" id="mWidth" min="6" max="60" step="2"></div></div>` : ''}
+    ${m.kind === 'path' ? `<div class="field"><label for="mWidth">Width</label><input type="number" id="mWidth" min="4" max="60" step="2"></div>` : ''}
+    ${m.kind === 'area' ? `<div class="row"><div class="field"><label for="mW">Width</label><input type="number" id="mW" min="4" step="2"></div><div class="field"><label for="mD">Depth</label><input type="number" id="mD" min="4" step="2"></div></div>` : ''}
+    ${['decoration', 'furniture', 'npc', 'enemy', 'item', 'spawn', 'note'].includes(m.kind) ? `<div class="field"><span class="lbl">Size</span><div class="seg" id="mSize">${Object.entries(SIZES).map(([v, n]) => `<button data-v="${v}" class="${(m.size || 'M') === v ? 'on' : ''}">${n}</button>`).join('')}</div></div>` : ''}
+    ${m.kind === 'camera' ? `<div class="field"><span class="lbl">Height</span><div class="seg" id="mHeight">${Object.keys(HEIGHTS).map(v => `<button data-v="${v}" class="${(m.height || 'medium') === v ? 'on' : ''}">${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}</div></div>` : ''}
+    ${m.face != null && m.kind !== 'door' ? `<div class="field"><span class="lbl">${m.kind === 'camera' ? 'Looks toward' : 'Faces'} · <span class="mono">${dirName(m.face)} ${m.face}°</span></span>
+      <div class="dial" id="mDial">${DIRS.map(d => d ? `<button data-v="${d[1]}" class="${dirName(m.face) === d[0] ? 'on' : ''}">${d[0]}</button>` : '<span>·</span>').join('')}</div></div>` : ''}
+    ${['decoration', 'item', 'note'].includes(m.kind) ? `<label class="row note" style="align-items:center;gap:6px;flex:0"><input type="checkbox" id="mHasFace" ${m.face != null ? 'checked' : ''} style="flex:0 0 auto;width:auto"> Has a front</label>` : ''}
+    <div class="row"><button class="btn" id="mDup">Duplicate</button><button class="btn danger" id="mDel">Delete</button></div>`;
+  $('mLabel').value = m.label || ''; $('mDetails').value = m.details || '';
+  $('mLabel').oninput = e => { m.label = e.target.value; touch(); drawPlan(); };
+  $('mDetails').oninput = e => { m.details = e.target.value; touch(); };
+  if ($('mTo')) { $('mTo').value = m.to || ''; $('mTo').onchange = e => { m.to = e.target.value; touch(); drawPlan(); }; }
+  if ($('mWidth')) { $('mWidth').value = m.width || (m.kind === 'path' ? 10 : 12); $('mWidth').oninput = e => { m.width = +e.target.value || m.width; touch(); drawPlan(); }; }
+  if ($('mW')) { $('mW').value = m.w; $('mD').value = m.d; $('mW').oninput = e => { m.w = Math.max(4, +e.target.value || 4); touch(); drawPlan(); }; $('mD').oninput = e => { m.d = Math.max(4, +e.target.value || 4); touch(); drawPlan(); }; }
+  for (const [id, key] of [['mSize', 'size'], ['mHeight', 'height']]) if ($(id)) $(id).querySelectorAll('button').forEach(b => b.onclick = () => { m[key] = b.dataset.v; touch(); renderInspector(); drawPlan(); });
+  if ($('mDial')) $('mDial').querySelectorAll('button').forEach(b => b.onclick = () => { m.face = +b.dataset.v; touch(); renderInspector(); drawPlan(); });
+  if ($('mHasFace')) $('mHasFace').onchange = e => { m.face = e.target.checked ? 0 : null; touch(); renderInspector(); drawPlan(); };
+  $('mDel').onclick = deleteMarker;
+  $('mDup').onclick = () => { const c = JSON.parse(JSON.stringify(m)); c.id = uid(); if (c.points) c.points = c.points.map(p => [p[0] + 8, p[1] + 8]); else if (c.kind !== 'door') { c.x += 8; c.z += 8; } room().markers.push(c); sel = c.id; touch(); renderAll(); };
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function renderAll() { renderRooms(); renderRoomForm(); fit(); drawPlan(); renderInspector(); }
+
+// room form wiring
+$('rPreset').innerHTML = PRESETS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+$('rName').oninput = e => { room().name = e.target.value; touch(); renderRooms(); drawPlan(); };
+$('rPreset').onchange = e => { const r = room(), p = PRESETS.find(p => p.id === e.target.value); r.preset = p.id; if (p.w) r.size = [p.w, p.d]; clampAll(); touch(); renderAll(); };
+for (const [id, i] of [['rW', 0], ['rD', 1]]) $(id).onchange = e => { const r = room(); r.size[i] = Math.max(32, Math.min(400, Math.round(+e.target.value / 2) * 2 || r.size[i])); clampAll(); touch(); renderAll(); };
+$('rSetting').onchange = e => { room().setting = e.target.value; touch(); };
+$('rBound').onchange = e => { room().boundary = e.target.value; touch(); drawPlan(); };
+$('rFloor').oninput = e => { room().floor = e.target.value; touch(); };
+$('rNotes').oninput = e => { room().notes = e.target.value; touch(); };
+function clampAll() { const r = room(); for (const m of r.markers) { if (m.kind === 'door') Object.assign(m, edgeSnap(...clampIn(m.x, m.z))); else if (m.points) m.points = m.points.map(p => clampIn(...p)); else if (m.x != null) [m.x, m.z] = clampIn(m.x, m.z); } }
+$('addRoom').onclick = () => { const r = newRoom('New room ' + (Object.keys(rooms).length + 1)); rooms[r.id] = r; current = r.id; sel = null; pendingNew.add(r.id); touch(r); renderAll(); $('rName').focus(); $('rName').select(); };
+let armed = false;
+$('delRoom').onclick = async () => {
+  const b = $('delRoom');
+  if (!armed) { armed = true; b.classList.add('armed'); b.textContent = 'Click again to delete'; setTimeout(() => { armed = false; b.classList.remove('armed'); b.textContent = 'Delete room'; }, 3000); return; }
+  armed = false; b.classList.remove('armed'); b.textContent = 'Delete room';
+  const id = current; await removeRoom(id); current = Object.keys(rooms)[0] || null; if (!current) seedBlank(); sel = null; renderAll();
+};
+
+// ------------------------------------------------------------ brief for Claude
+function yawOf(face) { const f = face * Math.PI / 180, vx = -Math.sin(f), vz = Math.cos(f); return Math.round(Math.atan2(-vx, -vz) * 180 / Math.PI); }
+function exportData() {
+  return { format: 'room-planner/1', units: 'base units (rooms.py); witch ≈ 35 tall, 14 wide', facing: '0 = south, 90 = west, 180 = north, 270 = east',
+    rooms: Object.values(rooms).map(r => ({ ...r, markers: r.markers.map(m => m.kind === 'camera' ? { ...m, yaw: yawOf(m.face || 0), tilt: HEIGHTS[m.height || 'medium'] } : m) })) };
+}
+function briefText() {
+  const out = ['# Room plan for Claude', '', 'Units are base units as in prototype/rooms.py (the witch is about 35 tall and 14 wide). x runs east, z runs south, (0, 0) is the north-west corner.',
+    'Facing: 0 = south (toward the camera side), 90 = west, 180 = north, 270 = east. Camera yaw/tilt are given in rooms.py terms.', ''];
+  const where = m => `(${m.x}, ${m.z})`, face = m => m.face != null ? `, faces ${dirName(m.face)} (${m.face}°)` : '';
+  const det = m => m.details ? `\n    ${m.details.replace(/\n/g, '\n    ')}` : '';
+  for (const r of Object.values(rooms)) {
+    out.push(`## ${r.name}  ·  id: ${r.id}`, `- Size: ${r.size[0]} × ${r.size[1]} (${r.setting === 'interior' ? 'indoors' : 'outdoors'}), edges: ${r.boundary}` + (r.floor ? `, floor: ${r.floor}` : ''));
+    if (r.notes) out.push(`- Mood / notes: ${r.notes}`);
+    const by = k => r.markers.filter(m => m.kind === k);
+    const sec = (title, list, fmt) => { if (list.length) { out.push('', `### ${title}`); list.forEach(m => out.push(fmt(m))); } };
+    sec('Player start', by('spawn'), m => `- ${m.label || 'Start'} at ${where(m)}${face(m)}${det(m)}`);
+    sec('Doors and exits', by('door'), m => `- ${m.label || 'Door'} on the ${({ N: 'north', S: 'south', E: 'east', W: 'west' })[m.edge]} edge at ${m.edge === 'N' || m.edge === 'S' ? 'x ' + m.x : 'z ' + m.z}, ${m.width || 12} wide → ${m.to ? (rooms[m.to] ? rooms[m.to].name + ' (' + m.to + ')' : m.to) : 'not linked yet'}${det(m)}`);
+    sec('Cameras', by('camera'), m => `- ${m.label || 'Camera'} at ${where(m)} looking ${dirName(m.face || 0)}: yaw ${yawOf(m.face || 0)}, tilt ${HEIGHTS[m.height || 'medium']} (${m.height || 'medium'} height)${det(m)}`);
+    sec('NPCs', by('npc'), m => `- ${m.label || 'NPC'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);
+    sec('Enemies', by('enemy'), m => `- ${m.label || 'Enemy'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);
+    sec('Interactables', by('item'), m => `- ${m.label || 'Interactable'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);
+    sec('Furniture', by('furniture'), m => `- ${m.label || 'Furniture'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);
+    sec('Decorations', by('decoration'), m => `- ${m.label || 'Decoration'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);
+    sec('Areas', by('area'), m => `- ${m.label || 'Area'}: x ${m.x}–${m.x + m.w}, z ${m.z}–${m.z + m.d}${det(m)}`);
+    sec('Paths', by('path'), m => `- ${m.label || 'Path'}, ${m.width || 10} wide, through ${m.points.map(p => `(${p[0]}, ${p[1]})`).join(' → ')}${det(m)}`);
+    sec('Notes', by('note'), m => `- At ${where(m)}: ${m.label || ''}${det(m)}`);
+    out.push('', '');
+  }
+  return out.join('\n').trim() + '\n';
+}
+let fmt = 'text';
+function fillBrief() {
+  $('briefText').value = fmt === 'text' ? briefText() : JSON.stringify(exportData(), null, 2);
+  $('briefNote').textContent = mode === 'db'
+    ? 'Your rooms are already saved where Claude can read them, so you can simply ask Claude to build them. Copy this if you want to paste it somewhere else.'
+    : 'Copy this into your message to Claude, or save a file and add it to the repo.';
+}
+$('briefBtn').onclick = () => { fillBrief(); $('briefDlg').showModal(); };
+$('closeBrief').onclick = () => $('briefDlg').close();
+$('briefFmt').querySelectorAll('button').forEach(b => b.onclick = () => { fmt = b.dataset.f; $('briefFmt').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); fillBrief(); });
+$('copyBtn').onclick = () => {
+  const t = $('briefText'), done = () => { $('copyBtn').textContent = 'Copied'; setTimeout(() => $('copyBtn').textContent = 'Copy', 1500); };
+  navigator.clipboard && navigator.clipboard.writeText(t.value).then(done, () => { t.focus(); t.select(); $('copyBtn').textContent = 'Press Ctrl+C'; })
+    || (t.focus(), t.select());
+};
+$('exportBtn').onclick = async () => {
+  const data = JSON.stringify(exportData(), null, 2), filename = 'rooms.plan.json';
+  let dl = null; try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) {}
+  if (dl) { try { await dl.save({ filename, data }); } catch (e) {} return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = filename; a.click();
+};
+$('importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const v = JSON.parse(await f.text());
+    for (const r of v.rooms || []) { r.markers = (r.markers || []).map(m => { const { yaw, tilt, ...rest } = m; return rest; }); rooms[r.id] = r; current = r.id; touch(r); }
+    $('briefNote').textContent = `Loaded ${(v.rooms || []).length} room(s).`; renderAll();
+  } catch (err) { $('briefNote').textContent = 'That file isn’t a room plan. Save one from this page first.'; }
+  e.target.value = '';
+};
+
+addEventListener('resize', () => { fit(); drawPlan(); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawPlan);
+new MutationObserver(drawPlan).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+loadLocal(); setTool('select'); renderTools(); renderAll(); connect();
+})();
+</script>

@@ -1,0 +1,658 @@
+{
+ "format": "room-planner/1",
+ "units": "base units (rooms.py)",
+ "rooms": [
+  {
+   "id": "cottage",
+   "name": "Witch's Cottage",
+   "preset": "custom",
+   "size": [
+    112,
+    84
+   ],
+   "setting": "interior",
+   "boundary": "walls",
+   "floor": "Wooden planks",
+   "notes": "Cosy one-room cottage. Near walls are cut away so the corner camera can see in.",
+   "markers": [
+    {
+     "id": "cottage-1",
+     "kind": "spawn",
+     "label": "Player start",
+     "details": "",
+     "x": 74,
+     "z": 66,
+     "size": "M",
+     "face": 160
+    },
+    {
+     "id": "cottage-2",
+     "kind": "furniture",
+     "label": "Bookshelf",
+     "details": "Clickable. First time: the witch learns the Spark spell from her grimoire.",
+     "x": 22,
+     "z": 8,
+     "size": "L",
+     "face": 0
+    },
+    {
+     "id": "cottage-3",
+     "kind": "furniture",
+     "label": "Cauldron",
+     "details": "Clickable. Flavour line: the brew smells of mint and thunder. Green brew glows.",
+     "x": 58,
+     "z": 46,
+     "size": "L",
+     "face": 0
+    },
+    {
+     "id": "cottage-4",
+     "kind": "furniture",
+     "label": "Table with candle",
+     "details": "Clickable. Holds the fairy's note that starts the quest.",
+     "x": 90,
+     "z": 22,
+     "size": "L",
+     "face": 0
+    },
+    {
+     "id": "cottage-5",
+     "kind": "furniture",
+     "label": "Bed",
+     "details": "Clickable. Flavour line: no napping now.",
+     "x": 15,
+     "z": 56,
+     "size": "L",
+     "face": 0
+    },
+    {
+     "id": "cottage-6",
+     "kind": "item",
+     "label": "Chest",
+     "details": "Clickable. First time: gives a mana potion.",
+     "x": 94,
+     "z": 68,
+     "size": "M",
+     "face": 0
+    },
+    {
+     "id": "cottage-7",
+     "kind": "decoration",
+     "label": "Barrel",
+     "details": "",
+     "x": 102,
+     "z": 11,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "cottage-8",
+     "kind": "door",
+     "label": "Go outside",
+     "details": "",
+     "edge": "N",
+     "x": 56,
+     "z": 0,
+     "width": 12,
+     "to": "garden"
+    },
+    {
+     "id": "cottage-9",
+     "kind": "note",
+     "label": "Window",
+     "details": "Window in the wall here.",
+     "x": 0,
+     "z": 44,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "cottage-10",
+     "kind": "camera",
+     "label": "Camera",
+     "details": "Fixed angle (rooms.py: yaw 32, tilt 36, zoom 4.4).",
+     "x": 88,
+     "z": 84,
+     "face": 148,
+     "height": "high"
+    },
+    {
+     "id": "cottage-11",
+     "kind": "area",
+     "label": "Purple rug",
+     "details": "Purple with a gold border.",
+     "x": 36,
+     "z": 30,
+     "w": 46,
+     "d": 34
+    }
+   ],
+   "updated": 0
+  },
+  {
+   "id": "garden",
+   "name": "Garden",
+   "preset": "custom",
+   "size": [
+    176,
+    120
+   ],
+   "setting": "exterior",
+   "boundary": "fence",
+   "floor": "Grass with a stone path",
+   "notes": "Fenced garden in front of the cottage. Two camera angles split at the middle.",
+   "markers": [
+    {
+     "id": "garden-1",
+     "kind": "furniture",
+     "label": "Stone well",
+     "details": "Clickable. A voice hints at the fairy past the eastern gate.",
+     "x": 128,
+     "z": 30,
+     "size": "L",
+     "face": 0
+    },
+    {
+     "id": "garden-2",
+     "kind": "decoration",
+     "label": "Flowerbed",
+     "details": "",
+     "x": 30,
+     "z": 16,
+     "size": "L",
+     "face": null
+    },
+    {
+     "id": "garden-3",
+     "kind": "decoration",
+     "label": "Flowerbed",
+     "details": "",
+     "x": 88,
+     "z": 16,
+     "size": "L",
+     "face": null
+    },
+    {
+     "id": "garden-4",
+     "kind": "decoration",
+     "label": "Barrel",
+     "details": "",
+     "x": 106,
+     "z": 14,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "garden-5",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 20,
+     "z": 96,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "garden-6",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 154,
+     "z": 98,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "garden-7",
+     "kind": "decoration",
+     "label": "Berry bush",
+     "details": "",
+     "x": 92,
+     "z": 104,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "garden-8",
+     "kind": "decoration",
+     "label": "Bush",
+     "details": "",
+     "x": 50,
+     "z": 106,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "garden-9",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 36,
+     "z": 82,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "garden-10",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 42,
+     "z": 88,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "garden-11",
+     "kind": "decoration",
+     "label": "Rocks",
+     "details": "",
+     "x": 118,
+     "z": 96,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "garden-12",
+     "kind": "item",
+     "label": "Signpost",
+     "details": "Clickable. Reads \"\u2192 Whispering Forest\".",
+     "x": 160,
+     "z": 46,
+     "size": "S",
+     "face": 0
+    },
+    {
+     "id": "garden-13",
+     "kind": "door",
+     "label": "Go inside",
+     "details": "",
+     "edge": "N",
+     "x": 56,
+     "z": 0,
+     "width": 12,
+     "to": "cottage"
+    },
+    {
+     "id": "garden-14",
+     "kind": "door",
+     "label": "To the forest",
+     "details": "",
+     "edge": "E",
+     "x": 176,
+     "z": 62,
+     "width": 28,
+     "to": "forest"
+    },
+    {
+     "id": "garden-15",
+     "kind": "note",
+     "label": "Window",
+     "details": "Window in the wall here.",
+     "x": 88,
+     "z": 0,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "garden-16",
+     "kind": "area",
+     "label": "Cottage outer wall (stone)",
+     "details": "Stone wall with the cottage door and a window.",
+     "x": 16,
+     "z": 0,
+     "w": 96,
+     "d": 4
+    },
+    {
+     "id": "garden-17",
+     "kind": "camera",
+     "label": "Camera A",
+     "details": "Fixed angle (rooms.py: yaw -28, tilt 34, zoom 4.0).",
+     "x": 26,
+     "z": 109,
+     "face": 208,
+     "height": "medium"
+    },
+    {
+     "id": "garden-18",
+     "kind": "area",
+     "label": "Camera A zone",
+     "details": "Camera A is used while the player is in here.",
+     "x": 0,
+     "z": 0,
+     "w": 88,
+     "d": 120
+    },
+    {
+     "id": "garden-19",
+     "kind": "camera",
+     "label": "Camera B",
+     "details": "Fixed angle (rooms.py: yaw 38, tilt 30, zoom 4.0).",
+     "x": 163,
+     "z": 107,
+     "face": 142,
+     "height": "medium"
+    },
+    {
+     "id": "garden-20",
+     "kind": "area",
+     "label": "Camera B zone",
+     "details": "Camera B is used while the player is in here.",
+     "x": 88,
+     "z": 0,
+     "w": 88,
+     "d": 120
+    },
+    {
+     "id": "garden-21",
+     "kind": "path",
+     "label": "Stone path",
+     "details": "",
+     "points": [
+      [
+       56,
+       6
+      ],
+      [
+       58,
+       36
+      ],
+      [
+       84,
+       58
+      ],
+      [
+       130,
+       62
+      ],
+      [
+       176,
+       62
+      ]
+     ],
+     "width": 14
+    }
+   ],
+   "updated": 0
+  },
+  {
+   "id": "forest",
+   "name": "Forest Clearing",
+   "preset": "custom",
+   "size": [
+    150,
+    120
+   ],
+   "setting": "exterior",
+   "boundary": "trees",
+   "floor": "Dark grass with a dirt clearing",
+   "notes": "Clearing ringed by trees. The fairy floats in a mushroom ring.",
+   "markers": [
+    {
+     "id": "forest-1",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 18,
+     "z": 18,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-2",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 54,
+     "z": 8,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-3",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 96,
+     "z": 6,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-4",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 140,
+     "z": 30,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-5",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 142,
+     "z": 82,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-6",
+     "kind": "decoration",
+     "label": "Bush",
+     "details": "",
+     "x": 18,
+     "z": 100,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-7",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 128,
+     "z": 112,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-8",
+     "kind": "decoration",
+     "label": "Berry bush",
+     "details": "",
+     "x": 54,
+     "z": 112,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-9",
+     "kind": "decoration",
+     "label": "Bush",
+     "details": "",
+     "x": 92,
+     "z": 114,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-10",
+     "kind": "decoration",
+     "label": "Berry bush",
+     "details": "",
+     "x": 10,
+     "z": 38,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-11",
+     "kind": "decoration",
+     "label": "Rocks",
+     "details": "",
+     "x": 36,
+     "z": 92,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "forest-12",
+     "kind": "decoration",
+     "label": "Thorn barrier",
+     "details": "",
+     "x": 124,
+     "z": 10,
+     "size": "L",
+     "face": null
+    },
+    {
+     "id": "forest-13",
+     "kind": "item",
+     "label": "Heart crystal",
+     "details": "Cast Spark at it: it lights up and the thorn barrier disappears. Dark until then.",
+     "x": 116,
+     "z": 40,
+     "size": "M",
+     "face": 0
+    },
+    {
+     "id": "forest-14",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 105,
+     "z": 63,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "forest-15",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 93,
+     "z": 73,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "forest-16",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 61,
+     "z": 66,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "forest-17",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 59,
+     "z": 53,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "forest-18",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 71,
+     "z": 43,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "forest-19",
+     "kind": "decoration",
+     "label": "Big red mushroom",
+     "details": "",
+     "x": 89,
+     "z": 42,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "forest-20",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 103,
+     "z": 50,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "forest-21",
+     "kind": "npc",
+     "label": "Fairy",
+     "details": "Quest giver. Asks the witch to rekindle the heart crystal; thanks her afterwards. Floats and turns to face the player.",
+     "x": 82,
+     "z": 56,
+     "size": "M",
+     "face": 200
+    },
+    {
+     "id": "forest-22",
+     "kind": "door",
+     "label": "Back to the garden",
+     "details": "",
+     "edge": "W",
+     "x": 0,
+     "z": 60,
+     "width": 28,
+     "to": "garden"
+    },
+    {
+     "id": "forest-23",
+     "kind": "camera",
+     "label": "Camera",
+     "details": "Fixed angle (rooms.py: yaw -22, tilt 29, zoom 4.0).",
+     "x": 56,
+     "z": 114,
+     "face": 202,
+     "height": "low"
+    },
+    {
+     "id": "forest-24",
+     "kind": "area",
+     "label": "Dirt clearing (round)",
+     "details": "Roughly circular patch of bare earth.",
+     "x": 40,
+     "z": 23,
+     "w": 84,
+     "d": 73
+    },
+    {
+     "id": "forest-25",
+     "kind": "path",
+     "label": "Stone path",
+     "details": "",
+     "points": [
+      [
+       0,
+       60
+      ],
+      [
+       36,
+       60
+      ],
+      [
+       58,
+       58
+      ]
+     ],
+     "width": 14
+    }
+   ],
+   "updated": 0
+  }
+ ]
+}
