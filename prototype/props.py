@@ -345,6 +345,21 @@ def stump(seed=13):
     return p.done()
 
 
+def boulder(seed=15):
+    """Big mossy boulder: one large rounded rock with a couple of smaller ones, moss on the top."""
+    p = P(34, 22, 28)
+    m = p.m; cx, cz = p.cx, p.cz
+    rock = [(150, 146, 150), (136, 132, 140), (162, 156, 158)]
+    main = m.ell(cx - 1, p.y(8), cz, 13, 12, 10.5) & (p.h >= 0) | m.ell(cx + 4, p.y(12), cz - 1, 9, 9, 8)
+    placed = m.put(main, rock[0], 'rock')
+    m.col[placed & (((p.X * 3 + p.Z * 5 + p.h * 7).astype(int) % 11) < 3)] = rock[1]          # mottling
+    m.col[placed & (p.h >= 15)] = (98, 150, 84)                                                   # moss on top
+    m.col[placed & (p.h >= 13) & (p.h < 15) & ((np.round(p.X + p.Z) % 3) == 0)] = (110, 160, 90)
+    m.put(m.ell(cx + 12, p.y(3), cz + 7, 5, 3.5, 4), rock[2], 'rock')
+    m.put(m.ell(cx - 13, p.y(2.5), cz + 6, 4, 3, 3.5), rock[1], 'rock')
+    return p.done()
+
+
 def wildflowers(seed=14):
     """A loose patch of mixed wild flowers on the grass (no bed): daisies, bluebells, poppies, buttercups."""
     p = P(28, 9, 22)
@@ -372,5 +387,5 @@ PROPS = {
     'mushroom': mushroom, 'mushroom_big': lambda: mushroom(seed=10, big=True), 'well': well, 'rocks': rocks,
     'signpost': signpost, 'crystal_dim': crystal, 'crystal_lit': lambda: crystal(lit=True), 'thorns': thorns,
     'fence_x': lambda: fence(24, 'x'), 'fence_z': lambda: fence(24, 'z'),
-    'stump': stump, 'wildflowers': wildflowers, 'wildflowers2': lambda: wildflowers(seed=21),
+    'stump': stump, 'wildflowers': wildflowers, 'wildflowers2': lambda: wildflowers(seed=21), 'boulder': boulder,
 }

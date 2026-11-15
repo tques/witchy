@@ -142,7 +142,10 @@ dialog textarea { min-height: 50vh; font: 12px/1.5 var(--font-mono) }
 <dialog id="briefDlg">
   <div class="bar">
     <h2 style="font-size:14px">Brief for Claude</h2>
-    <div class="seg" id="briefFmt"><button data-f="text" class="on">Readable</button><button data-f="json">JSON</button></div>
+    <div class="row" style="flex:0 1 auto;align-items:center">
+      <div class="seg" id="briefScope"><button data-s="room" class="on">This room</button><button data-s="all">All rooms</button></div>
+      <div class="seg" id="briefFmt"><button data-f="text" class="on">Readable</button><button data-f="json">JSON</button></div>
+    </div>
   </div>
   <p class="note" id="briefNote"></p>
   <textarea id="briefText" readonly></textarea>
@@ -584,16 +587,19 @@ $('delRoom').onclick = async () => {
 
 // ------------------------------------------------------------ brief for Claude
 function yawOf(face) { const f = face * Math.PI / 180, vx = -Math.sin(f), vz = Math.cos(f); return Math.round(Math.atan2(-vx, -vz) * 180 / Math.PI); }
+let scope = 'room';                       // brief covers just the open room, or every room
+const scopeRooms = () => scope === 'room' && room() ? [room()] : Object.values(rooms);
 function exportData() {
   return { format: 'room-planner/1', units: 'base units (rooms.py); witch ≈ 35 tall, 14 wide', facing: '0 = south, 90 = west, 180 = north, 270 = east',
-    rooms: Object.values(rooms).map(r => ({ ...r, markers: r.markers.map(m => m.kind === 'camera' ? { ...m, yaw: yawOf(m.face || 0), tilt: HEIGHTS[m.height || 'medium'] } : m) })) };
+    rooms: scopeRooms().map(r => ({ ...r, markers: r.markers.map(m => m.kind === 'camera' ? { ...m, yaw: yawOf(m.face || 0), tilt: HEIGHTS[m.height || 'medium'] } : m) })) };
 }
 function briefText() {
   const out = ['# Room plan for Claude', '', 'Units are base units as in prototype/rooms.py (the witch is about 35 tall and 14 wide). x runs east, z runs south, (0, 0) is the north-west corner.',
     'Facing: 0 = south (toward the camera side), 90 = west, 180 = north, 270 = east. Camera yaw/tilt are given in rooms.py terms.', ''];
   const where = m => `(${m.x}, ${m.z})`, face = m => m.face != null ? `, faces ${dirName(m.face)} (${m.face}°)` : '';
   const det = m => m.details ? `\n    ${m.details.replace(/\n/g, '\n    ')}` : '';
-  for (const r of Object.values(rooms)) {
+  if (scope === 'room') out.push('Only this room is included. Doors name the rooms they lead to.', '');
+  for (const r of scopeRooms()) {
     out.push(`## ${r.name}  ·  id: ${r.id}`, `- Size: ${r.size[0]} × ${r.size[1]} (${r.setting === 'interior' ? 'indoors' : 'outdoors'}), edges: ${r.boundary}` + (r.floor ? `, floor: ${r.floor}` : ''));
     if (r.notes) out.push(`- Mood / notes: ${r.notes}`);
     const by = k => r.markers.filter(m => m.kind === k);
@@ -616,12 +622,14 @@ function briefText() {
 let fmt = 'text';
 function fillBrief() {
   $('briefText').value = fmt === 'text' ? briefText() : JSON.stringify(exportData(), null, 2);
+  const what = scope === 'room' && room() ? `“${room().name}”` : 'all your rooms';
   $('briefNote').textContent = mode === 'db'
-    ? 'Your rooms are already saved where Claude can read them, so you can simply ask Claude to build them. Copy this if you want to paste it somewhere else.'
-    : 'Copy this into your message to Claude, or save a file and add it to the repo.';
+    ? `This brief covers ${what}. Your rooms are already saved where Claude can read them, so you can also just ask Claude to build a room by name.`
+    : `This brief covers ${what}. Copy it into your message to Claude, or save a file and add it to the repo.`;
 }
 $('briefBtn').onclick = () => { fillBrief(); $('briefDlg').showModal(); };
 $('closeBrief').onclick = () => $('briefDlg').close();
+$('briefScope').querySelectorAll('button').forEach(b => b.onclick = () => { scope = b.dataset.s; $('briefScope').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); fillBrief(); });
 $('briefFmt').querySelectorAll('button').forEach(b => b.onclick = () => { fmt = b.dataset.f; $('briefFmt').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); fillBrief(); });
 $('copyBtn').onclick = () => {
   const t = $('briefText'), done = () => { $('copyBtn').textContent = 'Copied'; setTimeout(() => $('copyBtn').textContent = 'Copy', 1500); };
@@ -629,7 +637,7 @@ $('copyBtn').onclick = () => {
     || (t.focus(), t.select());
 };
 $('exportBtn').onclick = async () => {
-  const data = JSON.stringify(exportData(), null, 2), filename = 'rooms.plan.json';
+  const data = JSON.stringify(exportData(), null, 2), filename = (scope === 'room' && room() ? room().id : 'rooms') + '.plan.json';
   let dl = null; try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) {}
   if (dl) { try { await dl.save({ filename, data }); } catch (e) {} return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' })); a.download = filename; a.click();

@@ -3,6 +3,7 @@
 A top-down planner for the prototype's rooms. You lay out a room with text markers ("Pumpkin", "Old wizard", "Door to the cellar") and Claude turns them into real sprite-stacked props, characters, doors and cameras in `prototype/rooms.py` and `prototype/props.py`.
 
 - **Live version:** https://claude.ai/artifact/RNMHtaN12iw2kwvPsGanTb. Rooms save automatically to the page's shared storage, where Claude can read them directly. Ask, for example, "build the Pumpkin Kitchen from the planner".
+- **Sharing one room:** **Brief for Claude** covers just the room you have open by default. Switch to **All rooms** for the whole world.
 - **Offline copy:** `room_planner.html`. Open it in a browser. Rooms save in that browser. Use **Brief for Claude** to copy a brief, or **Save file** to write `rooms.plan.json`.
 
 ## Markers
