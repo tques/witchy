@@ -96,12 +96,12 @@ Outputs in `out/NAME/`:
 
 ### Spellcasting (`spritestack/cast.py`)
 
-Any mage can use the two cast presets: `cast_hold` (a loop) and `cast_flick` (plays once, starting from and returning to the hold).
+Any mage can use the cast presets. They chain: `cast_raise` (once, prop comes up) → `cast_hold` (loop) → `cast_flick` (once, from and back into the hold) → `cast_lower` (once, prop goes back down).
 
 ```python
 from spritestack.cast import cast
 
-ANIMATIONS = {..., 'cast_hold': {}, 'cast_flick': {}}
+ANIMATIONS = {..., 'cast_raise': {}, 'cast_hold': {}, 'cast_flick': {}, 'cast_lower': {}}
 
 c = cast(pose)                                   # inert unless a cast animation
 c.apply(m, pivot_y=FEET_Y)                       # small lean: back on the wind-up, forward on the snap
@@ -118,12 +118,26 @@ c.breeze                                         # 0..1 magic wind for hair and 
 
 | preset | frames, fps | what happens |
 |---|---|---|
+| cast_raise / cast_lower | 6 @ 12, once | prop eases up into the hold (or back down), focus and motes fade in (or out) |
 | cast_hold | 8 @ 8, loop | prop raised and swaying ±4°, focus pulses, 6 motes circle it, light breeze |
 | cast_flick | 10 @ 14, once | wind back −35°, snap to +22°, release at 42%: bolt and burst ring, then settle into the hold |
 
 Keep the standing code path untouched (`if not c.active:`) so the approved standing model can't change. Aim the raised prop up and out to the side so it never covers the face. In `play.html`, Space casts.
 
 **Centring:** engines and viewers spin each slice around its middle. If a character is modelled off-centre (the witch sits at x=23 to leave room for her staff), set `CENTER_X` to the body's centre line. For props that reach far forward (a raised staff), use a deeper `GRID` and set `CENTER_Z` to its middle. The build sizes one box to fit the standing pose and every frame, with the body centred in it.
+
+### Showcase sequences
+
+Chain any built animations into one GIF, for previews and pitches:
+
+```bash
+python tools/sequence.py witch "stand:1s walk:2 run:3 walk:1 stand:0.6s cast_raise cast_hold:1 cast_flick cast_hold:2" --labels
+```
+
+- Steps are `name:cycles` or `name:seconds` followed by `s`. `stand` is the standing pose.
+- The ground scrolls at each animation's own speed.
+- `--orbit 40` swings the camera across the sequence to show off the 3D.
+- Output goes to `out/NAME/sequence.gif`.
 
 ## Layout
 
@@ -139,6 +153,7 @@ characters/fairy.py       winged character (membranes, antennae, leaf skirt)
 characters/_template.py   starting point for new characters
 tools/prep_sprite.py      sprite prep: pixel size, background, grid, palette, colour dump
 tools/new_character.py    copy the template
+tools/sequence.py         chain animations into a showcase GIF
 ```
 
 Changing a value in `style.py` changes every character on its next build. Rebuild all characters with:

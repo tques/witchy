@@ -63,29 +63,37 @@ def viewer(vol, path, title):
     open(path, 'w').write(html)
 
 
-def anim_gif(seq, path, angle=35, scale=style.PREVIEW_SCALE, tilt=style.CAMERA_TILT, spacing=12, bg=style.BACKGROUND):
-    """seq: list of (volume, fps, speed). Plays the frames over ground dots that scroll back at
-    `speed` cubes per frame (she faces +z; the camera follows her)."""
+def ground_frame(vol, angle, travel, scale=style.PREVIEW_SCALE, tilt=style.CAMERA_TILT, spacing=12,
+                 bg=style.BACKGROUND):
+    """One frame of a character over ground dots that have scrolled back `travel` cubes
+    (she faces +z and the camera follows her), with a soft shadow under her."""
     from PIL import ImageDraw
-    H, D, W, _ = seq[0][0].shape
+    H, D, W, _ = vol.shape
     S = scale; T = math.radians(tilt); th = math.radians(angle)
     c, s_, st = math.cos(th), math.sin(th), math.sin(T)
+    ch = frame(vol, angle, scale, tilt, bg=None)
+    OW, OH = ch.size
+    cx = OW / 2; base = OH - W * S * 0.35
+    img = Image.new('RGBA', (OW, OH), bg + (255,))
+    d = ImageDraw.Draw(img)
+    reach = max(OW, OH) / S + spacing
+    for gx in np.arange(-reach, reach + 1, spacing):
+        for gz in np.arange(-reach, reach + 1, spacing):
+            z = gz - travel % spacing
+            X = cx + S * (gx * c - z * s_)
+            Y = base + S * (gx * s_ + z * c) * st
+            if -S <= X <= OW + S and -S <= Y <= OH + S:
+                d.rectangle([X - S * 0.6, Y - S * 0.4, X + S * 0.6, Y + S * 0.4], fill=(52, 44, 82, 255))
+    d.ellipse([cx - S * 9, base - S * 9 * st, cx + S * 9, base + S * 9 * st], fill=(16, 13, 28, 255))
+    img.alpha_composite(ch)
+    return img
+
+
+def anim_gif(seq, path, angle=35, **kw):
+    """seq: list of (volume, fps, speed). Ground scrolls `speed` cubes per frame."""
     out, durations, travel = [], [], 0.0
     for vol, fps, speed in seq:
-        ch = frame(vol, angle, scale, tilt, bg=None)
-        OW, OH = ch.size
-        cx = OW / 2; base = OH - W * S * 0.35
-        img = Image.new('RGBA', (OW, OH), bg + (255,))
-        d = ImageDraw.Draw(img)
-        for gx in np.arange(-72, 73, spacing):
-            for gz in np.arange(-72, 73, spacing):
-                z = gz - travel % spacing
-                X = cx + S * (gx * c - z * s_)
-                Y = base + S * (gx * s_ + z * c) * st
-                d.rectangle([X - S * 0.6, Y - S * 0.4, X + S * 0.6, Y + S * 0.4], fill=(52, 44, 82, 255))
-        d.ellipse([cx - S * 9, base - S * 9 * st, cx + S * 9, base + S * 9 * st], fill=(16, 13, 28, 255))
-        img.alpha_composite(ch)
-        out.append(img.convert('P', palette=Image.ADAPTIVE))
+        out.append(ground_frame(vol, angle, travel, **kw).convert('P', palette=Image.ADAPTIVE))
         durations.append(int(1000 / fps))
         travel += speed
     out[0].save(path, save_all=True, append_images=out[1:], duration=durations, loop=0)
@@ -110,7 +118,7 @@ def play_viewer(stand, anims, path, title):
         buf = io.BytesIO()
         Image.fromarray(anim_atlas(vols), 'RGBA').save(buf, 'PNG')
         data[name] = dict(n=len(vols), fps=cfg['fps'], speed=cfg['speed'], loop=cfg.get('loop', True),
-                          after=cfg.get('chain_from'),
+                          after=cfg.get('then', cfg.get('chain_from')),
                           src='data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode())
     html = open(os.path.join(os.path.dirname(__file__), 'play_viewer_template.html')).read()
     for k, v in dict(TITLE=title, W=W, H=H, D=D, TILT=style.CAMERA_TILT, ANIMS=json.dumps(data)).items():

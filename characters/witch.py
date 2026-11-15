@@ -22,7 +22,7 @@ GOLD, BELT, STAFF, ORB = (215, 160, 60), (170, 115, 55), (200, 140, 60), (205, 1
 STOCK, BOOT, SLEEVE_IN = (80, 55, 140), (105, 75, 180), (45, 32, 85)
 
 # animations use the toolkit presets (spritestack/gait.py); override any value here, e.g. dict(stride=8)
-ANIMATIONS = {'walk': {}, 'run': {}, 'cast_hold': {}, 'cast_flick': {}}
+ANIMATIONS = {'walk': {}, 'run': {}, 'cast_raise': {}, 'cast_hold': {}, 'cast_flick': {}, 'cast_lower': {}}
 
 # one eye, copied from the sprite, inner column first; mirrored for the other eye
 EYE = [["251f48", "292048", "2b2046", "2b2046", "6a4a59"],

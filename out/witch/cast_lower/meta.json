@@ -1,0 +1,16 @@
+{
+ "W": 100,
+ "H": 90,
+ "D": 76,
+ "frames": 6,
+ "fps": 12,
+ "speed": 0.0,
+ "loop": false,
+ "chain_from": "cast_hold",
+ "then": "stand",
+ "breeze": 0.35,
+ "sparkle_count": 6,
+ "sparkle_radius": 7.5,
+ "sparkle_size": 1.1,
+ "layout": "frames left to right; each frame column is H slices of W x D, top to bottom"
+}

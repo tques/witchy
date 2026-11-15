@@ -14,13 +14,19 @@
     c.breeze                  # 0..1 magic wind: lift hair / hems a little (use like gait.trail)
     c.apply(m, pivot_y)       # small lean (back on wind-up, forward on the snap)
 
-cast_hold loops; cast_flick plays once, starting and ending in the hold pose, so the two chain.
+cast_raise brings the prop up into the hold, cast_hold loops, cast_flick plays once from and back
+into the hold, cast_lower puts the prop away again: raise -> hold -> flick -> hold -> lower chain.
 With pose=None every value is 0 / the rest pose, so the standing model never changes.
 """
 import math
 import numpy as np
 
 PRESETS = {
+    # bring the prop up from the standing pose into the hold (and the reverse to put it away)
+    'cast_raise': dict(frames=6, fps=12, speed=0.0, loop=False, then='cast_hold', breeze=0.35,
+                       sparkle_count=6, sparkle_radius=7.5, sparkle_size=1.1),
+    'cast_lower': dict(frames=6, fps=12, speed=0.0, loop=False, chain_from='cast_hold', then='stand', breeze=0.35,
+                       sparkle_count=6, sparkle_radius=7.5, sparkle_size=1.1),
     # held, ready to cast: arm up, focus pulsing, sparkles circling
     'cast_hold':  dict(frames=8, fps=8, speed=0.0, loop=True, sway=4.0, sparkle_count=6, sparkle_radius=7.5, sparkle_size=1.1,
                        breeze=0.35),
@@ -70,6 +76,11 @@ class Cast:
         self.pitch, self.hand_off, self.lean, self.burst, self.bolt_t = 0.0, np.zeros(3), 0.0, None, None
         if not self.active:
             self.pulse, self.breeze = 0.0, 0.0
+        elif self.kind in ('cast_raise', 'cast_lower'):
+            k = _ease(t if self.kind == 'cast_raise' else 1 - t)
+            self.raise_ = k
+            self.pulse = 0.5 * k                              # matches the hold's first frame at the top
+            self.breeze = s['breeze'] * k
         elif self.kind == 'cast_hold':
             self.pitch = s['sway'] * math.sin(2 * math.pi * t)
             self.pulse = 0.5 + 0.5 * math.sin(2 * math.pi * t)
@@ -136,8 +147,10 @@ class Cast:
             return []
         c = np.asarray(center, float); u, v = self._frame(aim); s = self.s
         pts = []
-        if self.kind == 'cast_hold':
+        if self.kind in ('cast_hold', 'cast_raise', 'cast_lower'):
             n, R = s['sparkle_count'], s['sparkle_radius']
+            if self.kind != 'cast_hold':
+                n = int(round(n * max(0.0, (self.raise_ - 0.4) / 0.6)))   # motes appear as the prop comes up
             for i in range(n):
                 a = 2 * math.pi * (self.t + i / n)
                 r = R * (1 + 0.12 * math.sin(4 * math.pi * self.t + i))

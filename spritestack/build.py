@@ -107,13 +107,15 @@ def build(path, quick=False, views=None, outroot=None):
         img.save(os.path.join(ad, 'frames.png'))
         if not quick:
             seq = [(v, cfg['fps'], cfg['speed']) for v in vols]
-            lead = cfg.get('chain_from')
-            if lead in anims:        # one-shots: show them from (and back into) the pose they chain from
-                lc = cfgs[lead]
-                hold = [(v, lc['fps'], lc['speed']) for v in anims[lead]]
-                seq = hold + seq + hold
-            else:
+            if cfg.get('loop', True):
                 seq = seq * 3
+            else:                    # one-shots: show them between the poses they come from and go to
+                def part(name):
+                    if name in anims:
+                        pc = cfgs[name]
+                        return [(v, pc['fps'], pc['speed']) for v in anims[name]]
+                    return [(vol, 8, 0.0)] * 8                      # standing
+                seq = part(cfg.get('chain_from', 'stand')) + seq + part(cfg.get('then', cfg.get('chain_from', 'stand')))
             render.anim_gif(seq, os.path.join(out, f'{anim}.gif'))
         print(f'  {anim}: {len(vols)} frames, {cfg["fps"]} fps, {cfg["speed"]:.2f} cubes/frame -> {ad}')
     if anims and not quick:
