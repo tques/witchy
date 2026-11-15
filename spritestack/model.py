@@ -261,6 +261,26 @@ class Model:
                             self.flat[y, z - dz, x] = True
 
     # ------------------------------------------------------------- shading
+    def scaled(self, k):
+        """A copy enlarged by factor k before lighting (e.g. props built small, scaled up to the
+        characters' one-cube-per-pixel size). Shapes are resampled smoothly so curves stay round
+        and the lighting is computed at full resolution; colours and parts are resampled nearest."""
+        from scipy import ndimage as ndi
+        if k == 1:
+            return self
+        H2, D2, W2 = (int(round(n * k)) for n in (self.H, self.D, self.W))
+        f = (H2 / self.H, D2 / self.D, W2 / self.W)
+        out = Model(W2, H2, D2)
+        out.occ = ndi.zoom(self.occ.astype(float), f, order=1) > 0.5
+        out.col = np.stack([ndi.zoom(self.col[..., i], f, order=0) for i in range(3)], -1)
+        out.part = ndi.zoom(self.part, f, order=0)
+        out.flat = ndi.zoom(self.flat.astype(np.uint8), f, order=0).astype(bool)
+        out.parts, out.glow_parts = dict(self.parts), list(self.glow_parts)
+        if hasattr(self, 'glow_boost'):
+            out.glow_boost = dict(self.glow_boost)
+        out.occ &= out.part > 0
+        return out
+
     def _apply_lean(self):
         """Shear the model forward (running lean). Whole layers move, so they stay level."""
         if not self.lean:

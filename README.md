@@ -154,6 +154,7 @@ characters/_template.py   starting point for new characters
 tools/prep_sprite.py      sprite prep: pixel size, background, grid, palette, colour dump
 tools/new_character.py    copy the template
 tools/sequence.py         chain animations into a showcase GIF
+prototype/                click-to-move adventure/RPG prototype built from sprite stacks (see prototype/README.md)
 ```
 
 Changing a value in `style.py` changes every character on its next build. Rebuild all characters with:
