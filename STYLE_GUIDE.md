@@ -93,8 +93,15 @@ Use `m.membrane()` (see `characters/fairy.py`).
   - forward lean of 0.09, made by shifting whole layers, so brims stay level and no planks appear
   - arms pump harder, and the forward hand rises
   - hair, hems, capes and hat tips stream backward (`g.trail`)
+- **Casting** (`spritestack/cast.py`, any mage):
+  - The hold raises the prop up and out to the side, never across the face.
+  - The focus (orb or gem) pulses with `glow(boost)`, and 6 small unlit plus-shaped sparkles orbit it.
+  - The flick has a clear wind-up, a fast snap past the aim, then a release with a bolt and a trail plus an expanding sparkle ring that thins out.
+  - It ends back in the hold pose, so the two chain.
+  - Magic wind (`c.breeze`) lifts hair the same way running does.
+  - Sparkles are the only unlit colours besides eyes; keep them near-white tinted with the spell's colour.
 - **Ground speed comes from the stride** (`2 × stride ÷ (frames ÷ 2)`), so feet don't slide. Don't hand-tune it.
-- **Centre the body** (`CENTER_X`). Everything spins around the middle of each layer.
+- **Centre the body** (`CENTER_X`, plus `CENTER_Z` with a deeper `GRID` when props reach far forward). Everything spins around the middle of each layer, and nothing may be cut off at the box edge.
 - **The standing pose must not change** when animation is added: with no pose, every gait offset is exactly 0.
 
 ## 10. Colours

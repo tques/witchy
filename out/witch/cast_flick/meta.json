@@ -1,0 +1,34 @@
+{
+ "W": 100,
+ "H": 90,
+ "D": 76,
+ "frames": 10,
+ "fps": 14,
+ "speed": 0.0,
+ "loop": false,
+ "chain_from": "cast_hold",
+ "wind_pitch": -35.0,
+ "snap_pitch": 22.0,
+ "wind_hand": [
+  0,
+  -2.0,
+  -2.5
+ ],
+ "snap_hand": [
+  0,
+  1.0,
+  3.0
+ ],
+ "release": 0.42,
+ "burst_len": 0.4,
+ "bolt_len": 0.35,
+ "bolt_reach": 16.0,
+ "bolt_size": 3.6,
+ "burst_radius": 12.0,
+ "sparkle_count": 12,
+ "sparkle_size": 1.4,
+ "breeze": 0.6,
+ "lean_wind": -0.03,
+ "lean_snap": 0.05,
+ "layout": "frames left to right; each frame column is H slices of W x D, top to bottom"
+}

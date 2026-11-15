@@ -89,12 +89,41 @@ Outputs in `out/NAME/`:
 
 | file | what |
 |---|---|
-| `play.html` | stand / walk / run buttons; drag or ← → to steer; hold Shift to run |
-| `walk.gif`, `run.gif` | each cycle over scrolling ground |
+| `play.html` | buttons for every animation; drag or ← → to steer; hold Shift to run; Space to cast |
+| `walk.gif`, `run.gif`, `cast_*.gif` | each animation over the ground (one-shots shown between their hold loops) |
 | `walk/atlas.png`, `run/atlas.png` + `meta.json` | frames left to right, each a column of H slices (W × D); meta has fps and speed |
 | `walk/frames.png`, `run/frames.png` | every frame from the side, for checking the steps |
 
-**Centring:** engines and viewers spin each slice around its middle. If a character is modelled off-centre (the witch sits at x=23 to leave room for her staff), set `CENTER_X` to the body's centre line. The build re-centres the standing pose and every frame on it.
+### Spellcasting (`spritestack/cast.py`)
+
+Any mage can use the two cast presets: `cast_hold` (a loop) and `cast_flick` (plays once, starting from and returning to the hold).
+
+```python
+from spritestack.cast import cast
+
+ANIMATIONS = {..., 'cast_hold': {}, 'cast_flick': {}}
+
+c = cast(pose)                                   # inert unless a cast animation
+c.apply(m, pivot_y=FEET_Y)                       # small lean: back on the wind-up, forward on the snap
+hand = c.hand(rest_hand, raised_hand)            # casting hand position
+aim = c.aim(rest_dir, cast_dir)                  # prop direction, with wind-up / snap pitch
+butt, tip = c.place([butt, tip], grip, rest_dir, hand, aim)   # re-aim a rigid prop around its grip
+R = c.rotation(rest_dir, aim)                    # for oriented shapes: m.ell_oriented(centre, radii, R)
+m.cuffed_arm_to(shoulder, hand, ...)             # arm that reaches the hand
+m.glow('orb', boost=1 + 0.3 * c.pulse)           # pulsing focus
+m.sparkle(c.sparkles(tip, aim), colour, size=c.sparkle_size)   # orbiting motes / burst ring
+for p, size in c.bolt(tip, aim): m.sparkle([p], white, size=size)  # released bolt + trail
+c.breeze                                         # 0..1 magic wind for hair and hems (like gait.trail)
+```
+
+| preset | frames, fps | what happens |
+|---|---|---|
+| cast_hold | 8 @ 8, loop | prop raised and swaying ±4°, focus pulses, 6 motes circle it, light breeze |
+| cast_flick | 10 @ 14, once | wind back −35°, snap to +22°, release at 42%: bolt and burst ring, then settle into the hold |
+
+Keep the standing code path untouched (`if not c.active:`) so the approved standing model can't change. Aim the raised prop up and out to the side so it never covers the face. In `play.html`, Space casts.
+
+**Centring:** engines and viewers spin each slice around its middle. If a character is modelled off-centre (the witch sits at x=23 to leave room for her staff), set `CENTER_X` to the body's centre line. For props that reach far forward (a raised staff), use a deeper `GRID` and set `CENTER_Z` to its middle. The build sizes one box to fit the standing pose and every frame, with the body centred in it.
 
 ## Layout
 
@@ -102,6 +131,7 @@ Outputs in `out/NAME/`:
 spritestack/style.py      house-style numbers (light, bands, face, camera)
 spritestack/model.py      Model: shapes, brim, membrane, cuffed_arm, recess_panel, paint_eyes, lean, shade
 spritestack/gait.py       walk/run presets: feet, arms, hem, bob, lean, trail, ground speed
+spritestack/cast.py       cast_hold / cast_flick presets: raise, aim, wind-up, snap, pulse, sparkles, bolt
 spritestack/render.py     preview frames, turntable, sheet, atlas, viewer
 spritestack/build.py      build command
 characters/witch.py       reference character

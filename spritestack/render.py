@@ -63,33 +63,36 @@ def viewer(vol, path, title):
     open(path, 'w').write(html)
 
 
-def walk_gif(vols, path, speed, fps, angle=35, cycles=3, scale=style.PREVIEW_SCALE, tilt=style.CAMERA_TILT,
-             spacing=12, bg=style.BACKGROUND):
-    """Animation frames played over ground dots that scroll back as she walks forward
-    (she faces +z; the camera follows her)."""
+def anim_gif(seq, path, angle=35, scale=style.PREVIEW_SCALE, tilt=style.CAMERA_TILT, spacing=12, bg=style.BACKGROUND):
+    """seq: list of (volume, fps, speed). Plays the frames over ground dots that scroll back at
+    `speed` cubes per frame (she faces +z; the camera follows her)."""
     from PIL import ImageDraw
-    H, D, W, _ = vols[0].shape
+    H, D, W, _ = seq[0][0].shape
     S = scale; T = math.radians(tilt); th = math.radians(angle)
     c, s_, st = math.cos(th), math.sin(th), math.sin(T)
-    out = []
-    n = len(vols) * cycles
-    for i in range(n):
-        ch = frame(vols[i % len(vols)], angle, scale, tilt, bg=None)
+    out, durations, travel = [], [], 0.0
+    for vol, fps, speed in seq:
+        ch = frame(vol, angle, scale, tilt, bg=None)
         OW, OH = ch.size
         cx = OW / 2; base = OH - W * S * 0.35
         img = Image.new('RGBA', (OW, OH), bg + (255,))
         d = ImageDraw.Draw(img)
-        travel = (i * speed) % spacing
-        for gx in np.arange(-60, 61, spacing):
-            for gz in np.arange(-60, 61, spacing):
-                z = gz - travel
+        for gx in np.arange(-72, 73, spacing):
+            for gz in np.arange(-72, 73, spacing):
+                z = gz - travel % spacing
                 X = cx + S * (gx * c - z * s_)
                 Y = base + S * (gx * s_ + z * c) * st
                 d.rectangle([X - S * 0.6, Y - S * 0.4, X + S * 0.6, Y + S * 0.4], fill=(52, 44, 82, 255))
         d.ellipse([cx - S * 9, base - S * 9 * st, cx + S * 9, base + S * 9 * st], fill=(16, 13, 28, 255))
         img.alpha_composite(ch)
         out.append(img.convert('P', palette=Image.ADAPTIVE))
-    out[0].save(path, save_all=True, append_images=out[1:], duration=int(1000 / fps), loop=0)
+        durations.append(int(1000 / fps))
+        travel += speed
+    out[0].save(path, save_all=True, append_images=out[1:], duration=durations, loop=0)
+
+
+def walk_gif(vols, path, speed, fps, cycles=3, **kw):
+    anim_gif([(v, fps, speed) for v in vols] * cycles, path, **kw)
 
 
 def anim_atlas(vols):
@@ -106,7 +109,8 @@ def play_viewer(stand, anims, path, title):
     for name, (vols, cfg) in [('stand', ([stand], dict(fps=1, speed=0)))] + list(anims.items()):
         buf = io.BytesIO()
         Image.fromarray(anim_atlas(vols), 'RGBA').save(buf, 'PNG')
-        data[name] = dict(n=len(vols), fps=cfg['fps'], speed=cfg['speed'],
+        data[name] = dict(n=len(vols), fps=cfg['fps'], speed=cfg['speed'], loop=cfg.get('loop', True),
+                          after=cfg.get('chain_from'),
                           src='data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode())
     html = open(os.path.join(os.path.dirname(__file__), 'play_viewer_template.html')).read()
     for k, v in dict(TITLE=title, W=W, H=H, D=D, TILT=style.CAMERA_TILT, ANIMS=json.dumps(data)).items():

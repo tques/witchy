@@ -1,7 +1,7 @@
 {
- "W": 88,
+ "W": 100,
  "H": 90,
- "D": 48,
+ "D": 76,
  "layer_order": "top to bottom",
  "slice": "W x D, front row last"
 }

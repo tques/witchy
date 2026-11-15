@@ -57,6 +57,11 @@ class Model:
         X, Y, Z = self.X, self.Y, self.Z
         return ((X - cx) / rx) ** 2 + ((Y - cy) / ry) ** 2 + ((Z - cz) / rz) ** 2 <= 1
 
+    def ell_oriented(self, c, radii, R):
+        """Ellipsoid whose local axes are the columns of rotation R (for re-aimed rings, discs, gems)."""
+        P = np.stack([self.X - c[0], self.Y - c[1], self.Z - c[2]], -1) @ np.asarray(R, float)
+        return ((P / np.asarray(radii, float)) ** 2).sum(-1) <= 1
+
     def ball(self, c, r):
         return self.ell(c[0], c[1], c[2], r, r, r)
 
@@ -188,6 +193,21 @@ class Model:
         self.put(self.cylinder(E + 0.4 * d, E + 2.6 * d, wrist_r), skin, p_skin)
         return E + 3.4 * d          # hand centre, handy for placing props
 
+    def cuffed_arm_to(self, shoulder, hand, *a, **kw):
+        """cuffed_arm, but aimed so the hand lands on `hand` (for raised/casting poses)."""
+        S = np.array(shoulder, float); Hd = np.array(hand, float)
+        d = (Hd - S) / np.linalg.norm(Hd - S)
+        return self.cuffed_arm(S, Hd - 3.4 * d, *a, **kw)
+
+    def sparkle(self, points, color, part='magic', size=1.0):
+        """Small unlit glints (magic motes, bursts, bolts). Exact colour, always bright."""
+        for p in points:
+            m = self.ell(p[0], p[1], p[2], size, size, size) | self.cylinder(
+                (p[0] - size * 1.6, p[1], p[2]), (p[0] + size * 1.6, p[1], p[2]), 0.55) | self.cylinder(
+                (p[0], p[1] - size * 1.6, p[2]), (p[0], p[1] + size * 1.6, p[2]), 0.55)   # little plus-shaped star
+            placed = self.put(m, color, part)
+            self.flat |= placed
+
     def recess_panel(self, panel, color, rows, skip_rows=(), edge_color=None):
         """Push a front panel one cube in so the trim beside it reads as a lip.
         `panel` marks the panel's voxels; optional darker edge where it meets the trim."""
@@ -208,9 +228,12 @@ class Model:
                     if len(zs):
                         self.col[y, zs.max(), x] = edge_color
 
-    def glow(self, part):
-        """Self-lit part (orb, gem): stays bright and gets a specular highlight."""
+    def glow(self, part, boost=None):
+        """Self-lit part (orb, gem): stays bright and gets a specular highlight.
+        boost (e.g. 1.0-1.35) brightens it further, for a pulsing spell focus."""
         self.glow_parts.append(part)
+        if boost is not None:
+            self.glow_boost = getattr(self, 'glow_boost', {}); self.glow_boost[part] = boost
 
     # --------------------------------------------------------- face paint
     def front_z(self, y, x):
@@ -286,6 +309,8 @@ class Model:
         for p in self.glow_parts:
             o = self.part == self.pid(p)
             sh[o] = style.GLOW_MIN + style.GLOW_RANGE * lam[o]
+            if p in getattr(self, 'glow_boost', {}):
+                sh[o] *= self.glow_boost[p]
             spec |= o & (lam > style.GLOW_SPEC)
         out = np.clip(self.col * sh[..., None], 0, 255)
         out[spec] = style.SPEC_COLOR

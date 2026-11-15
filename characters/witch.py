@@ -3,11 +3,14 @@ import math
 import numpy as np
 from spritestack import hexc
 from spritestack.gait import gait
+from spritestack.cast import cast
 
 NAME = 'witch'
 TITLE = 'Witch Sprite Stack'
 SPRITE = 'sprites/witch.png'   # 67x88 native grid
 CENTER_X = 23.0                # body centre line (she was modelled at x=23 to leave room for the staff)
+GRID = (72, 90, 72)            # deep box so the raised staff fits; the build trims it around CENTER_Z
+CENTER_Z = 36.0                # = GRID depth / 2: her body's front-to-back centre
 
 # palette (sampled from the sprite)
 SKIN = (240, 208, 185); SKIN_FACE = (221, 199, 182)
@@ -19,7 +22,7 @@ GOLD, BELT, STAFF, ORB = (215, 160, 60), (170, 115, 55), (200, 140, 60), (205, 1
 STOCK, BOOT, SLEEVE_IN = (80, 55, 140), (105, 75, 180), (45, 32, 85)
 
 # animations use the toolkit presets (spritestack/gait.py); override any value here, e.g. dict(stride=8)
-ANIMATIONS = {'walk': {}, 'run': {}}
+ANIMATIONS = {'walk': {}, 'run': {}, 'cast_hold': {}, 'cast_flick': {}}
 
 # one eye, copied from the sprite, inner column first; mirrored for the other eye
 EYE = [["251f48", "292048", "2b2046", "2b2046", "6a4a59"],
@@ -34,14 +37,31 @@ def build(m, sprite, pose=None):
     cx = 23.0
     g = gait(pose)                    # all offsets are 0 when standing
     g.apply(m, pivot_y=88)            # body bob + running lean, pivoting at her feet
-    tr = g.trail                      # 0 standing/walking, 1 running: hair and hat tip stream back
+    c = cast(pose)                    # spellcasting (inert unless a cast animation)
+    c.apply(m, pivot_y=88)
+    tr = max(g.trail, c.breeze)       # running / magic wind: hair and hat tip stream back
     staff_dz, staff_dy = g.prop_arm(1), g.arm_lift(1)   # she holds the staff in the screen-right hand
 
-    # staff and orb, held out in her right hand
-    oz, oy = zc + staff_dz, staff_dy
-    m.put(m.ball((58, 44 + oy, oz + 5), 4.6), ORB, 'orb'); m.glow('orb')
-    m.put(m.ell(58, 44 + oy, oz + 5, 6.3, 6.3, 3.2) & ~m.ell(58, 44 + oy, oz + 5, 4.8, 4.8, 6), GOLD, 'gold')
-    m.put(m.capsule((32, 60 + oy, oz + 4), (53, 46 + oy, oz + 5), 1.3), STAFF, 'gold')
+    if not c.active:
+        # staff and orb, held out in her right hand
+        oz, oy = zc + staff_dz, staff_dy
+        m.put(m.ball((58, 44 + oy, oz + 5), 4.6), ORB, 'orb'); m.glow('orb')
+        m.put(m.ell(58, 44 + oy, oz + 5, 6.3, 6.3, 3.2) & ~m.ell(58, 44 + oy, oz + 5, 4.8, 4.8, 6), GOLD, 'gold')
+        m.put(m.capsule((32, 60 + oy, oz + 4), (53, 46 + oy, oz + 5), 1.3), STAFF, 'gold')
+    else:
+        # casting: the whole staff turns about her grip and is raised forward
+        grip = (36.5, 57.0, zc + 4.2)                     # where her hand holds it when standing
+        rest_dir = (26, -16, 1)                           # butt -> orb when standing
+        hand = c.hand((cx + 13.5, 54.9, zc + 3.9), (cx + 14, 48, zc + 9))
+        aim = c.aim(rest_dir, (0.55, -0.75, 0.35))      # up and out to her side: face stays clear
+        R = c.rotation(rest_dir, aim)
+        butt, top, orb = c.place([(32, 60, zc + 4), (53, 46, zc + 5), (58, 44, zc + 5)], grip, rest_dir, hand, aim)
+        for p, size in c.bolt(orb, aim):                  # released bolt with a fading trail
+            m.sparkle([p], (255, 245, 255), size=size)
+        m.sparkle(c.sparkles(orb, aim), (235, 220, 255), size=c.sparkle_size)
+        m.put(m.ball(orb, 4.6 + 0.5 * c.pulse), ORB, 'orb'); m.glow('orb', boost=1 + 0.3 * c.pulse)
+        m.put(m.ell_oriented(orb, (6.3, 6.3, 3.2), R) & ~m.ell_oriented(orb, (4.8, 4.8, 6), R), GOLD, 'gold')
+        m.put(m.capsule(butt, top, 1.3), STAFF, 'gold')
 
     # head with a flat face plate
     face_z = int(zc + 6)
@@ -73,8 +93,13 @@ def build(m, sprite, pose=None):
 
     # arms with flat cuffs
     parts = ('sleeve', 'gold', 'sleeve_in', 'skin')
-    m.cuffed_arm((cx - 7, 42, zc), (cx - 11, 55 + g.arm_lift(-1), zc + 1 + g.arm(-1)), ROBE, GOLD, SKIN, SLEEVE_IN, parts)
-    m.cuffed_arm((cx + 7, 42, zc), (cx + 12, 52 + staff_dy, zc + 3 + staff_dz), ROBE, GOLD, SKIN, SLEEVE_IN, parts)
+    if not c.active:
+        m.cuffed_arm((cx - 7, 42, zc), (cx - 11, 55 + g.arm_lift(-1), zc + 1 + g.arm(-1)), ROBE, GOLD, SKIN, SLEEVE_IN, parts)
+        m.cuffed_arm((cx + 7, 42, zc), (cx + 12, 52 + staff_dy, zc + 3 + staff_dz), ROBE, GOLD, SKIN, SLEEVE_IN, parts)
+    else:
+        m.cuffed_arm((cx - 7, 42, zc), tuple(c.free_hand((cx - 11, 55, zc + 1), (cx - 13.5, 49, zc + 3))),
+                     ROBE, GOLD, SKIN, SLEEVE_IN, parts)          # free hand opens out to the side
+        m.cuffed_arm_to((cx + 7, 42, zc), hand, ROBE, GOLD, SKIN, SLEEVE_IN, parts)
 
     # collar, brooch, flared robe
     m.put(m.ell(cx, 40.5, zc, 6.5, 3, 5.5), ROBE, 'robe')

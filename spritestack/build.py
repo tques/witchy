@@ -14,7 +14,7 @@ import argparse, importlib.util, json, os, time
 import numpy as np
 from PIL import Image
 from .model import Model
-from . import render, gait
+from . import render, gait, cast
 
 
 def load_character(path):
@@ -24,21 +24,36 @@ def load_character(path):
     return mod
 
 
-def recenter(vols, cx, margin=2):
-    """Pad/crop the x axis so the body centre line cx sits in the middle of every layer.
-    Game engines (and the viewers) spin each slice around its centre, so the body must be there."""
+def anim_settings(anim, overrides):
+    if anim in cast.PRESETS:
+        return dict(cast.PRESETS[anim], **(overrides or {}))
+    return gait.settings(anim, overrides)
+
+
+def _fit(vols, axis, c, margin):
+    """Pad/crop one axis (1 = z, 2 = x) of every volume so position c is the exact middle."""
     occ = np.any([v[..., 3] > 0 for v in vols], axis=0)
-    xs = np.where(occ.any(axis=(0, 1)))[0]
-    half = int(np.ceil(max(cx - xs.min(), xs.max() + 1 - cx))) + margin
-    lo = int(round(cx)) - half
+    other = (0, 1) if axis == 2 else (0, 2)
+    idx = np.where(occ.any(axis=other))[0]
+    half = int(np.ceil(max(c - idx.min(), idx.max() + 1 - c))) + margin
+    lo = int(round(c)) - half
     out = []
     for v in vols:
-        H, D, W, _ = v.shape
-        n = np.zeros((H, D, 2 * half, 4), np.uint8)
-        a, b = max(lo, 0), min(lo + 2 * half, W)
-        n[:, :, a - lo:b - lo] = v[:, :, a:b]
+        shape = list(v.shape); n_ax = shape[axis]; shape[axis] = 2 * half
+        n = np.zeros(shape, np.uint8)
+        a, b = max(lo, 0), min(lo + 2 * half, n_ax)
+        src = [slice(None)] * 4; dst = [slice(None)] * 4
+        src[axis] = slice(a, b); dst[axis] = slice(a - lo, b - lo)
+        n[tuple(dst)] = v[tuple(src)]
         out.append(n)
     return out
+
+
+def recenter(vols, cx, cz=None, margin=2):
+    """Put the body centre (x = cx, z = cz) in the middle of every layer, sized to fit all frames.
+    Game engines (and the viewers) spin each slice around its centre, so the body must be there."""
+    vols = _fit(vols, 2, cx, margin)
+    return _fit(vols, 1, cz, margin) if cz is not None else vols
 
 
 def build(path, quick=False, views=None, outroot=None):
@@ -54,7 +69,7 @@ def build(path, quick=False, views=None, outroot=None):
     out = os.path.join(outroot or os.path.join(root, 'out'), ch.NAME)
     os.makedirs(out, exist_ok=True)
     anims = {}
-    cfgs = {a: gait.settings(a, o) for a, o in getattr(ch, 'ANIMATIONS', {}).items()}
+    cfgs = {a: anim_settings(a, o) for a, o in getattr(ch, 'ANIMATIONS', {}).items()}
     for anim, cfg in cfgs.items():
         vols = []
         for i in range(cfg['frames']):
@@ -63,7 +78,8 @@ def build(path, quick=False, views=None, outroot=None):
             vols.append(fm.shade())
         anims[anim] = vols
     if center is not None:                     # one shared width for the pose and every frame
-        allv = recenter([vol] + [v for vs in anims.values() for v in vs], center)
+        allv = recenter([vol] + [v for vs in anims.values() for v in vs], center,
+                        getattr(ch, 'CENTER_Z', None))
         vol, k = allv[0], 1
         for anim in anims:
             anims[anim] = allv[k:k + len(anims[anim])]; k += len(anims[anim])
@@ -90,7 +106,15 @@ def build(path, quick=False, views=None, outroot=None):
             img.paste(f, (i * sw, 0))
         img.save(os.path.join(ad, 'frames.png'))
         if not quick:
-            render.walk_gif(vols, os.path.join(out, f'{anim}.gif'), cfg['speed'], cfg['fps'])
+            seq = [(v, cfg['fps'], cfg['speed']) for v in vols]
+            lead = cfg.get('chain_from')
+            if lead in anims:        # one-shots: show them from (and back into) the pose they chain from
+                lc = cfgs[lead]
+                hold = [(v, lc['fps'], lc['speed']) for v in anims[lead]]
+                seq = hold + seq + hold
+            else:
+                seq = seq * 3
+            render.anim_gif(seq, os.path.join(out, f'{anim}.gif'))
         print(f'  {anim}: {len(vols)} frames, {cfg["fps"]} fps, {cfg["speed"]:.2f} cubes/frame -> {ad}')
     if anims and not quick:
         render.play_viewer(vol, {a: (anims[a], cfgs[a]) for a in anims}, os.path.join(out, 'play.html'),

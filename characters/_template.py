@@ -18,6 +18,7 @@ SPRITE = 'sprites/__NAME__.png'
 # GRID = (72, 90, 48)    # only if the sprite is bigger than ~70 x 88
 # CENTER_X = 23.0        # body centre line, if the body isn't modelled at the middle of the box
 # ANIMATIONS = {'walk': {}, 'run': {}}   # toolkit presets; see characters/witch.py and spritestack/gait.py
+#   mages: add 'cast_hold': {}, 'cast_flick': {} and follow the casting block in characters/witch.py (spritestack/cast.py)
 
 # ---- palette: pick from sprites/NAME_palette.txt ---------------------------------------------
 SKIN, SKIN_FACE = (240, 208, 185), (221, 199, 182)

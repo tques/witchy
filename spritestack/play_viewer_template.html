@@ -7,7 +7,7 @@ button.on{background:#5a4aa0;border-color:#8b7ad6;color:#fff}</style></head><bod
 <div class=r id=modes></div>
 <div class=r><label>Tilt <input id=t type=range min=5 max=80 value={{TILT}}></label><label>Zoom <input id=z type=range min=3 max=7 value=4></label>
 <label>Playback <input id=sp type=range min=0.25 max=2 step=0.25 value=1></label></div>
-<div style="opacity:.7;margin-bottom:12px;text-align:center;padding:0 16px">Drag sideways or use ← → to steer · hold Shift to run</div>
+<div style="opacity:.7;margin-bottom:12px;text-align:center;padding:0 16px" id=help>Drag sideways or use ← → to steer · hold Shift to run</div>
 <script>
 const W={{W}},H={{H}},D={{D}},A={{ANIMS}};
 const c=document.getElementById('c'),x=c.getContext('2d');
@@ -18,15 +18,20 @@ for(const name of names){const a=A[name],img=new Image();img.onload=()=>{F[name]
   k.getContext('2d').drawImage(img,f*W,y*D,W,D,0,0,W,D);L.push(k)}F[name].push(L)}
  if(++loaded==names.length)requestAnimationFrame(tick)};img.src=a.src;
  const b=document.createElement('button');b.textContent=name;b.id='b_'+name;b.onclick=()=>setMode(name);modes.appendChild(b)}
-function setMode(m){mode=m;phase=0;for(const n of names)document.getElementById('b_'+n).className=n==m?'on':''}
+let ret=null;                                                   // one-shot animations return here
+function setMode(m){const a=A[m];if(!a.loop){ret=a.after&&A[a.after]?a.after:(A[mode].loop?mode:'stand')}
+ mode=m;phase=0;for(const n of names)document.getElementById('b_'+n).className=n==m?'on':''}
 setMode(mode);
+const shots=names.filter(n=>!A[n].loop);
+if(shots.length)help.textContent+=' · Space: '+shots[0].replace('_',' ');
 c.onpointerdown=e=>{drag=e.clientX;c.setPointerCapture(e.pointerId)};c.onpointerup=()=>drag=null;
 c.onpointermove=e=>{if(drag!==null){heading+=(e.clientX-drag)*0.01;drag=e.clientX}};
-onkeydown=e=>{keys[e.key]=1;if(e.key=='Shift'&&A.run&&mode!='run'){shiftRun=mode;setMode('run')}};
+onkeydown=e=>{keys[e.key]=1;if(e.key==' '&&shots.length){e.preventDefault();setMode(shots[0])}if(e.key=='Shift'&&A.run&&mode!='run'){shiftRun=mode;setMode('run')}};
 onkeyup=e=>{keys[e.key]=0;if(e.key=='Shift'&&shiftRun){setMode(shiftRun);shiftRun=false}};
 function tick(now){const dt=last?Math.min((now-last)/1000,0.1):0;last=now;
  if(keys.ArrowLeft)heading-=2*dt;if(keys.ArrowRight)heading+=2*dt;
- const a=A[mode],adv=dt*a.fps*(+sp.value);phase=(phase+adv)%a.n;
+ const a=A[mode],adv=dt*a.fps*(+sp.value);phase+=adv;
+ if(phase>=a.n){if(a.loop)phase%=a.n;else{setMode(ret||'stand');ret=null}}
  px+=-Math.sin(heading)*a.speed*adv;pz+=Math.cos(heading)*a.speed*adv;   // forward = the way she faces
  draw();requestAnimationFrame(tick)}
 function draw(){const T=t.value*Math.PI/180,S=+z.value,cs=Math.cos(T),sn=Math.sin(T),n=Math.ceil(S*cs)+1;
