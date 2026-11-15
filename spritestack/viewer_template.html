@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>{{TITLE}}</title>
+<style>body{margin:0;background:#18142a;color:#cfc8ee;font:14px system-ui;display:flex;flex-direction:column;align-items:center}
+canvas{image-rendering:pixelated;max-width:100%;touch-action:none;cursor:grab}label{margin:6px 12px}.r{display:flex;flex-wrap:wrap;justify-content:center;padding:8px}</style></head><body>
+<canvas id=c width=520 height=640></canvas>
+<div class=r><label>Tilt <input id=t type=range min=5 max=80 value={{TILT}}></label><label>Zoom <input id=z type=range min=3 max=7 value=5></label>
+<label>Layer spread <input id=s type=range min=1 max=2 step=0.1 value=1></label><label><input id=a type=checkbox checked> auto-spin</label></div>
+<div style="opacity:.7;margin-bottom:12px">Drag to rotate · {{H}} stacked layers, {{W}}x{{D}} each</div>
+<script>
+const W={{W}},H={{H}},D={{D}},c=document.getElementById('c'),x=c.getContext('2d');
+const img=new Image();img.src='data:image/png;base64,{{ATLAS}}';
+let th=0,drag=null;const L=[];
+img.onload=()=>{for(let y=0;y<H;y++){const k=document.createElement('canvas');k.width=W;k.height=D;k.getContext('2d').drawImage(img,0,y*D,W,D,0,0,W,D);L.push(k)}requestAnimationFrame(f)};
+c.onpointerdown=e=>{drag=e.clientX;c.setPointerCapture(e.pointerId);a.checked=false};c.onpointerup=()=>drag=null;
+c.onpointermove=e=>{if(drag!==null){th+=(e.clientX-drag)*0.01;drag=e.clientX}};
+function f(){if(a.checked)th+=0.02;const T=t.value*Math.PI/180,S=+z.value,sp=+s.value;
+x.imageSmoothingEnabled=false;x.clearRect(0,0,c.width,c.height);
+const cx=c.width/2,base=c.height-60,cs=Math.cos(T),sn=Math.sin(T),n=Math.ceil(S*cs*sp)+1;
+for(let y=H-1;y>=0;y--){const cy=base-(H-1-y)*S*cs*sp;
+ for(let k=0;k<n;k++){x.setTransform(S*Math.cos(th),S*Math.sin(th)*sn,-S*Math.sin(th),S*Math.cos(th)*sn,cx,cy-k*(S*cs*sp)/n);
+  x.drawImage(L[y],-W/2,-D/2)}}
+x.setTransform(1,0,0,1,0,0);requestAnimationFrame(f)}
+</script></body></html>

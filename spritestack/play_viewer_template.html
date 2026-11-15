@@ -1,0 +1,45 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>{{TITLE}}</title>
+<style>body{margin:0;background:#18142a;color:#cfc8ee;font:14px system-ui;display:flex;flex-direction:column;align-items:center}
+canvas{image-rendering:pixelated;max-width:100%;touch-action:none;cursor:grab}label{margin:6px 12px}.r{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;padding:8px;gap:4px}
+button{background:#2c2548;color:#cfc8ee;border:1px solid #4a3f78;border-radius:6px;padding:6px 14px;font:inherit;cursor:pointer;text-transform:capitalize}
+button.on{background:#5a4aa0;border-color:#8b7ad6;color:#fff}</style></head><body>
+<canvas id=c width=560 height=560></canvas>
+<div class=r id=modes></div>
+<div class=r><label>Tilt <input id=t type=range min=5 max=80 value={{TILT}}></label><label>Zoom <input id=z type=range min=3 max=7 value=4></label>
+<label>Playback <input id=sp type=range min=0.25 max=2 step=0.25 value=1></label></div>
+<div style="opacity:.7;margin-bottom:12px;text-align:center;padding:0 16px">Drag sideways or use ← → to steer · hold Shift to run</div>
+<script>
+const W={{W}},H={{H}},D={{D}},A={{ANIMS}};
+const c=document.getElementById('c'),x=c.getContext('2d');
+const F={};let mode=A.walk?'walk':'stand',heading=0.6,px=0,pz=0,phase=0,drag=null,last=null,keys={},shiftRun=false;
+let loaded=0;const names=Object.keys(A);
+for(const name of names){const a=A[name],img=new Image();img.onload=()=>{F[name]=[];
+ for(let f=0;f<a.n;f++){const L=[];for(let y=0;y<H;y++){const k=document.createElement('canvas');k.width=W;k.height=D;
+  k.getContext('2d').drawImage(img,f*W,y*D,W,D,0,0,W,D);L.push(k)}F[name].push(L)}
+ if(++loaded==names.length)requestAnimationFrame(tick)};img.src=a.src;
+ const b=document.createElement('button');b.textContent=name;b.id='b_'+name;b.onclick=()=>setMode(name);modes.appendChild(b)}
+function setMode(m){mode=m;phase=0;for(const n of names)document.getElementById('b_'+n).className=n==m?'on':''}
+setMode(mode);
+c.onpointerdown=e=>{drag=e.clientX;c.setPointerCapture(e.pointerId)};c.onpointerup=()=>drag=null;
+c.onpointermove=e=>{if(drag!==null){heading+=(e.clientX-drag)*0.01;drag=e.clientX}};
+onkeydown=e=>{keys[e.key]=1;if(e.key=='Shift'&&A.run&&mode!='run'){shiftRun=mode;setMode('run')}};
+onkeyup=e=>{keys[e.key]=0;if(e.key=='Shift'&&shiftRun){setMode(shiftRun);shiftRun=false}};
+function tick(now){const dt=last?Math.min((now-last)/1000,0.1):0;last=now;
+ if(keys.ArrowLeft)heading-=2*dt;if(keys.ArrowRight)heading+=2*dt;
+ const a=A[mode],adv=dt*a.fps*(+sp.value);phase=(phase+adv)%a.n;
+ px+=-Math.sin(heading)*a.speed*adv;pz+=Math.cos(heading)*a.speed*adv;   // forward = the way she faces
+ draw();requestAnimationFrame(tick)}
+function draw(){const T=t.value*Math.PI/180,S=+z.value,cs=Math.cos(T),sn=Math.sin(T),n=Math.ceil(S*cs)+1;
+ const co=Math.cos(heading),si=Math.sin(heading);
+ x.setTransform(1,0,0,1,0,0);x.fillStyle='#18142a';x.fillRect(0,0,c.width,c.height);x.imageSmoothingEnabled=false;
+ const cx=c.width/2,base=c.height*0.78,G=12;
+ x.fillStyle='#342c52';
+ const ex=c.width/S/2+G,ez=c.height/(S*sn)+G;
+ const gx0=Math.floor((px-ex)/G)*G,gz0=Math.floor((pz-ez)/G)*G;
+ for(let gx=gx0;gx<px+ex;gx+=G)for(let gz=gz0;gz<pz+ez;gz+=G){const X=cx+S*(gx-px),Y=base+S*(gz-pz)*sn;x.fillRect(X-S*0.6,Y-S*0.4,S*1.2,S*0.8)}
+ x.fillStyle='#100d1c';x.beginPath();x.ellipse(cx,base,S*9,S*9*sn,0,0,7);x.fill();
+ const L=F[mode][Math.floor(phase)%A[mode].n];
+ for(let y=H-1;y>=0;y--){const cy=base-(H-1-y)*S*cs;
+  for(let k=0;k<n;k++){x.setTransform(S*co,S*si*sn,-S*si,S*co*sn,cx,cy-k*(S*cs)/n);x.drawImage(L[y],-W/2,-D/2)}}
+ x.setTransform(1,0,0,1,0,0)}
+</script></body></html>
