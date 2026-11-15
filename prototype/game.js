@@ -293,6 +293,7 @@ function interact(id, obj) {
     case 'well': say([['Well', '...seek... the fairy... past the eastern gate...'], [ME, 'Thank you, well.']]); break;
     case 'sign': say([['Sign', '→ Whispering Forest']]); break;
     case 'stump': say([['', 'A hollow tree stump']]); break;
+    case 'pond': say([[ME, 'Lily pads drift on the still water. A frog is pretending not to see me.']]); break;
     case 'wizard': {
       const done = () => { obj.hold = false; obj.wait = 1.5; };
       if (!f.metWizard) {

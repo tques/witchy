@@ -360,6 +360,51 @@ def boulder(seed=15):
     return p.done()
 
 
+def pond(seed=16):
+    """Small lily pond: level water (one flat layer, so no plank stripes), stone rim, lily pads, reeds."""
+    p = P(44, 14, 32)
+    m = p.m; cx, cz = p.cx, p.cz; r = _rng(seed)
+    q = ((p.X - cx) / 19) ** 2 + ((p.Z - cz) / 13) ** 2
+    for i in range(5):                                                   # lily pads and a flower
+        a = r.uniform(0, 2 * math.pi); rr = r.uniform(0.25, 0.75)
+        x, z = cx + 17 * rr * math.cos(a), cz + 11 * rr * math.sin(a)
+        m.put(m.ell(x, p.y(2), z, 2.8, 0.6, 2.4) & ~m.ell(x + 1.8, p.y(2), z, 1.0, 1, 0.6), (88, 160, 84), 'pad')
+        if i == 0:
+            m.put(m.ball((x, p.y(2.4), z), 1.0), (245, 170, 200), 'lily')
+    water = (q <= 1) & (p.h >= 0) & (p.h < 2)
+    placed = m.put(water, (78, 128, 178), 'water')
+    m.col[placed & (p.h == 1) & (np.random.default_rng(seed).random(placed.shape) < 0.04)] = (150, 196, 228)   # glints
+    ring = (q > 1) & (q <= 1.45)
+    for k in range(26):                                                  # rim stones
+        a = 2 * math.pi * k / 26 + r.uniform(-0.05, 0.05)
+        x, z = cx + 20.5 * math.cos(a), cz + 14 * math.sin(a)
+        m.put(m.ell(x, p.y(1), z, r.uniform(2.2, 3.2), r.uniform(1.4, 2.4), r.uniform(1.8, 2.6)), STONE[k % 4], 'rim')
+    for k in range(7):                                                   # reeds at one end
+        x, z = cx + r.uniform(12, 18), cz + r.uniform(-8, 2)
+        hh = r.uniform(8, 12)
+        m.put(m.capsule((x, p.y(1), z), (x + r.uniform(-1, 1), p.y(hh), z), 0.5), (96, 140, 70), 'reed')
+        if k % 2 == 0:
+            m.put(m.ell(x, p.y(hh - 1.5), z, 0.8, 1.8, 0.8), (120, 82, 52), 'cattail')
+    return p.done()
+
+
+def log(seed=17):
+    """Fallen mossy log lying east-west, with end rings and a cluster of mushrooms."""
+    p = P(36, 12, 14)
+    m = p.m; cz = p.cz
+    bark, end = (108, 78, 56), (196, 156, 104)
+    body = m.cylinder((3, p.y(4.5), cz), (33, p.y(4.5), cz), 4.6)
+    placed = m.put(body, bark, 'log')
+    m.col[placed & ((p.X < 3.8) | (p.X > 32.2))] = end
+    m.col[placed & ((p.X < 3.8) | (p.X > 32.2)) & (np.round(np.hypot(m.Y - p.y(4.5), p.Z - cz)) % 2 == 0)] = (176, 136, 88)
+    m.col[placed & (p.h >= 8) & (p.X > 8) & (p.X < 26)] = (98, 150, 84)                # moss on top
+    m.put(m.capsule((24, p.y(6), cz - 3), (27, p.y(9.5), cz - 7), 1.3), bark, 'branch')
+    for x, hh in ((12, 9.6), (14.5, 10.2), (16.5, 9.4)):
+        m.put(m.ell(x, p.y(hh + 0.8), cz + 3.2, 1.5, 0.9, 1.5), (220, 120, 70), 'cap')
+        m.put(m.capsule((x, p.y(hh - 1), cz + 3.2), (x, p.y(hh + 0.5), cz + 3.2), 0.5), (240, 230, 210), 'stem')
+    return p.done()
+
+
 def wildflowers(seed=14):
     """A loose patch of mixed wild flowers on the grass (no bed): daisies, bluebells, poppies, buttercups."""
     p = P(28, 9, 22)
@@ -387,5 +432,5 @@ PROPS = {
     'mushroom': mushroom, 'mushroom_big': lambda: mushroom(seed=10, big=True), 'well': well, 'rocks': rocks,
     'signpost': signpost, 'crystal_dim': crystal, 'crystal_lit': lambda: crystal(lit=True), 'thorns': thorns,
     'fence_x': lambda: fence(24, 'x'), 'fence_z': lambda: fence(24, 'z'),
-    'stump': stump, 'wildflowers': wildflowers, 'wildflowers2': lambda: wildflowers(seed=21), 'boulder': boulder,
+    'stump': stump, 'wildflowers': wildflowers, 'wildflowers2': lambda: wildflowers(seed=21), 'boulder': boulder, 'pond': pond, 'log': log,
 }
