@@ -43,7 +43,8 @@ ROOMS = {
         name='Garden', size=(176, 120),
         floor=dict(style='grass', decals=[dict(kind='path', points=[(56, 6), (58, 36), (84, 58), (130, 62), (176, 62)], width=14)]),
         walls=[dict(start=(16, 0), axis='x', length=96, height=44, kind='stone', door=(34, 46), window=(66, 78))],
-        fences=[dict(start=(0, 8), axis='z', length=108), dict(start=(0, 116), axis='x', length=176),
+        fences=[dict(start=(0, 8), axis='z', length=108),
+                dict(start=(0, 116), axis='x', length=58), dict(start=(82, 116), axis='x', length=94),   # gap = south gate
                 dict(start=(172, 8), axis='z', length=40), dict(start=(172, 76), axis='z', length=40),
                 dict(start=(112, 4), axis='x', length=60)],
         props=[dict(asset='well', pos=(128, 30), block=(13, 13), interact=dict(id='well', label='Peer into the well', at=(128, 50))),
@@ -54,7 +55,8 @@ ROOMS = {
                dict(asset='mushroom', pos=(36, 82)), dict(asset='mushroom', pos=(42, 88)), dict(asset='rocks', pos=(118, 96), block=(7, 5)),
                dict(asset='signpost', pos=(160, 46), block=(3, 2), interact=dict(id='sign', label='Read sign', at=(154, 56)))],
         exits=[dict(rect=(50, 0, 62, 10), to='cottage', spawn=(56, 18), face=0, label='Go inside'),
-               dict(rect=(168, 48, 176, 76), to='forest', spawn=(14, 60), face=270, label='To the forest')],
+               dict(rect=(168, 48, 176, 76), to='forest', spawn=(14, 60), face=270, label='To the forest'),
+               dict(rect=(58, 112, 82, 120), to='field', spawn=(34, 18), face=0, label='To the field')],
         cameras=[dict(zone=(0, 0, 88, 120), yaw=-28, tilt=34, zoom=4.0, target=(54, 56)),
                  dict(zone=(88, 0, 176, 120), yaw=38, tilt=30, zoom=4.0, target=(126, 60))],
     ),
@@ -77,5 +79,23 @@ ROOMS = {
         npcs=[dict(asset='fairy', pos=(82, 56), face=200, bob=3, interact=dict(id='fairy', label='Talk to the fairy', at=(82, 80)))],
         exits=[dict(rect=(0, 46, 8, 74), to='garden', spawn=(160, 62), face=90, label='Back to the garden')],
         cameras=[dict(zone=None, yaw=-22, tilt=29, zoom=4.0, target=(78, 58))],
+    ),
+    'field': dict(
+        name='Field', size=(128, 96),
+        floor=dict(style='meadow', decals=[]),
+        props=[dict(asset='stump', pos=(46, 46), block=(8, 8),
+                    interact=dict(id='stump', label='Examine the tree stump', at=(46, 62))),
+               dict(asset='wildflowers', pos=(18, 26)), dict(asset='wildflowers2', pos=(24, 66)),
+               dict(asset='wildflowers2', pos=(92, 20)), dict(asset='wildflowers', pos=(102, 60)),
+               # tree edges on the far (north and west) sides, low bushes on the camera's side
+               dict(asset='bush2', pos=(8, 12), block=(9, 9)), dict(asset='tree2', pos=(76, 6), block=(6, 6)),   # keep the north door clear
+               dict(asset='tree', pos=(112, 8), block=(6, 6)), dict(asset='tree2', pos=(6, 48), block=(6, 6)),
+               dict(asset='tree', pos=(8, 86), block=(6, 6)),
+               dict(asset='bush', pos=(122, 36), block=(9, 9)), dict(asset='bush2', pos=(56, 90), block=(9, 9)),
+               dict(asset='bush', pos=(96, 92), block=(9, 9))],
+        npcs=[dict(asset='wizard', pos=(70, 70), face=0, wander=dict(radius=26, pause=(1.5, 4.0)),
+                   interact=dict(id='wizard', label='Talk to the wizard', at=(70, 84)))],
+        exits=[dict(rect=(22, 0, 46, 10), to='garden', spawn=(70, 104), face=180, label='Back to the garden')],
+        cameras=[dict(zone=None, yaw=45, tilt=32, zoom=3.6, target=(56, 40))],
     ),
 }

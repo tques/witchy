@@ -69,6 +69,7 @@ def scale_room(r, k):
         o['pos'] = sc(o['pos'])
         if 'block' in o: o['block'] = sc(o['block'])
         if 'interact' in o: o['interact'] = dict(o['interact'], at=sc(o['interact']['at']))
+        if 'wander' in o: o['wander'] = dict(o['wander'], radius=o['wander']['radius'] * k)
     for e in r['exits']:
         e['rect'], e['spawn'] = sc(e['rect']), sc(e['spawn'])
     for c in r['cameras']:
@@ -89,7 +90,7 @@ def main():
     assets, rooms = {}, {}
 
     # characters: one shared crop per character so every animation lines up
-    for char, anims in (('witch', ['stand', 'walk', 'run', 'cast_raise', 'cast_flick', 'cast_lower']), ('fairy', ['stand'])):
+    for char, anims in (('witch', ['stand', 'walk', 'run', 'cast_raise', 'cast_flick', 'cast_lower']), ('fairy', ['stand']), ('wizard', ['stand', 'walk'])):
         loaded = {a: load_anim(char, a) for a in anims}
         allv = trim([v for a in anims for v in loaded[a][0]])
         k = 0

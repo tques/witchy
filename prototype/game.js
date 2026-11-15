@@ -82,6 +82,9 @@ function paintFloor(room) {
       col = seam ? [92, 62, 44] : jit([[150, 104, 70], [140, 96, 64], [158, 112, 76]][plank % 3], 10);
     } else if (room.floor.style === 'grass') {
       col = jit((((bx * 7 + bz * 13) ^ (bx * bz)) & 31) < 2 ? [120, 180, 96] : [96, 158, 84], 14);
+    } else if (room.floor.style === 'meadow') {
+      let h = Math.imul(bx * 73856093 ^ bz * 19349663, 2654435761) >>> 24;               // scattered, no visible pattern
+      col = h < 3 ? [240, 236, 220] : h < 5 ? [236, 200, 90] : jit(h < 40 ? [128, 188, 100] : [112, 176, 92], 14);   // daisies and buttercups
     } else {
       col = jit((((bx * 5 + bz * 11) ^ (bx * bz)) & 31) < 2 ? [92, 140, 84] : [70, 118, 74], 14);
     }
@@ -185,7 +188,7 @@ function buildGrid(room) {
     const x = (i + 0.5) * CELL, z = (j + 0.5) * CELL;
     let b = x < 14 || z < 14 || x > W - 14 || z > D - 14;
     for (const o of S.objects) if (o.block && !o.gone && Math.abs(x - o.pos[0]) < o.block[0] + pad && Math.abs(z - o.pos[1]) < o.block[1] + pad) b = true;
-    for (const npc of S.npcs) if (Math.hypot(x - npc.x, z - npc.z) < 22) b = true;
+    for (const npc of S.npcs) if (!npc.wander && Math.hypot(x - npc.x, z - npc.z) < 22) b = true;
     for (const e of room.exits) if (x >= e.rect[0] - 4 && x <= e.rect[2] + 4 && z >= e.rect[1] - 4 && z <= e.rect[3] + 20) b = false;
     g[j * gw + i] = b ? 1 : 0;
   }
@@ -240,7 +243,7 @@ function enterRoom(id, spawn, face) {
   S.roomId = id; S.room = room; S.cam = null;
   S.objects = room.objects.map(o => Object.assign({}, o, { gone: id === 'forest' && o.asset === 'thorns' && S.flags.crystal }));
   for (const o of S.objects) if (o.swap && S.flags.crystal) o.asset = o.swap;
-  S.npcs = (room.npcs || []).map(n => ({ ...n, x: n.pos[0], z: n.pos[1], heading: n.face }));
+  S.npcs = (room.npcs || []).map(n => ({ ...n, x: n.pos[0], z: n.pos[1], heading: n.face, home: [...n.pos], anim: 'stand', phase: 0, path: [], wait: 1 + Math.random() * 2 }));
   S.floor = paintFloor(room);
   S.grid = buildGrid(room);
   P.x = spawn[0]; P.z = spawn[1]; P.heading = face; P.path = []; P.anim = 'stand'; P.onArrive = null;
@@ -289,6 +292,24 @@ function interact(id, obj) {
       else say([[ME, 'Just socks now.']]); break;
     case 'well': say([['Well', '...seek... the fairy... past the eastern gate...'], [ME, 'Thank you, well.']]); break;
     case 'sign': say([['Sign', '→ Whispering Forest']]); break;
+    case 'stump': say([['', 'A hollow tree stump']]); break;
+    case 'wizard': {
+      const done = () => { obj.hold = false; obj.wait = 1.5; };
+      if (!f.metWizard) {
+        f.metWizard = true;
+        say([['Wizard', 'Hmm? Oh! Hello, hello. You haven\'t seen my Looking Glass, have you?'],
+             ['Wizard', 'Round, brass, terribly important. I had it a moment ago... or was that Tuesday?'],
+             [ME, 'I\'ll keep an eye out for it.'],
+             ['Wizard', 'Splendid, splendid. Now, where was I going...']], done);
+      } else {
+        const lines = ['Looking Glass, Looking Glass... it must be around here somewhere.',
+                       'Did I check behind the flowers? I\'m sure I checked behind the flowers.',
+                       'Without my Looking Glass, everything looks rather... unlooked.',
+                       'Oh, hello again! Any luck? No? Hmm.'];
+        say([['Wizard', lines[(S.wizardLine = ((S.wizardLine ?? -1) + 1) % lines.length)]]], done);
+      }
+      break;
+    }
     case 'fairy':
       if (!f.crystal) {
         f.fairy = true;
@@ -332,6 +353,36 @@ function walkTo(x, z, run, onArrive) {
   const path = findPath(P.x, P.z, x, z);
   if (!path || !path.length) { if (onArrive) onArrive(); return; }
   P.path = path; P.run = run; P.onArrive = onArrive || null;
+}
+function stepNpcs(dt) {
+  for (const n of S.npcs) {
+    if (!n.wander) continue;
+    if (n.hold || S.dialog.length) { if (n.anim !== 'stand') { n.anim = 'stand'; n.phase = 0; n.path = []; } continue; }
+    if (!n.path.length) {
+      n.anim = 'stand'; n.wait -= dt;
+      if (n.wait <= 0) {                                       // pick somewhere nearby to potter over to
+        const w = n.wander;
+        for (let tries = 0; tries < 8; tries++) {
+          const a = Math.random() * Math.PI * 2, r = w.radius * (0.4 + 0.6 * Math.random());
+          const tx = n.home[0] + Math.cos(a) * r, tz = n.home[1] + Math.sin(a) * r;
+          if (!free(...cellOf(tx, tz))) continue;
+          const p = findPath(n.x, n.z, tx, tz);
+          if (p && p.length) { n.path = p; n.anim = 'walk'; n.phase = 0; break; }
+        }
+        n.wait = w.pause[0] + Math.random() * (w.pause[1] - w.pause[0]);
+      }
+      continue;
+    }
+    const a = A[n.asset + '_walk'], speed = a.speed * a.fps * 0.9;
+    let left = speed * dt;
+    while (left > 0 && n.path.length) {
+      const [tx, tz] = n.path[0], dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz);
+      if (d > 0.01) n.heading = Math.atan2(-dx, dz) / deg;
+      if (d <= left) { n.x = tx; n.z = tz; left -= d; n.path.shift(); } else { n.x += dx / d * left; n.z += dz / d * left; left = 0; }
+    }
+    n.phase += dt * a.fps * 0.9;
+    if (!n.path.length) { n.anim = 'stand'; n.phase = 0; }
+  }
 }
 function step(dt) {
   if (P.once) {                                          // one-shot animation (casting)
@@ -388,7 +439,13 @@ cv.addEventListener('mouseleave', () => { $('label').style.display = 'none'; });
 function act(t, run) {
   if (t.exit) { const e = t.exit; walkTo((e.rect[0] + e.rect[2]) / 2, (e.rect[1] + e.rect[3]) / 2, run); return; }
   const it = t.interact, obj = t.obj;
-  walkTo(it.at[0], it.at[1], run, () => { faceTo(obj.pos ? obj.pos[0] : obj.x, obj.pos ? obj.pos[1] : obj.z); interact(it.id, obj); });
+  let at = it.at;
+  if (obj.wander) {                                        // a wanderer waits for you; meet them where they are
+    obj.hold = true;
+    const dx = P.x - obj.x, dz = P.z - obj.z, d = Math.hypot(dx, dz) || 1;
+    at = [obj.x + dx / d * 42, obj.z + dz / d * 42];
+  }
+  walkTo(at[0], at[1], run, () => { faceTo(obj.pos ? obj.pos[0] : obj.x, obj.pos ? obj.pos[1] : obj.z); interact(it.id, obj); });
 }
 cv.addEventListener('click', e => {
   if (S.dialog.length) { advance(); return; }
@@ -418,9 +475,9 @@ function render() {
     list.push({ depth, obj: o, s: [o.asset, 0, o.pos[0], o.pos[1], 0, 0], label: o.interact && o.interact.label, interact: o.interact, wall: o.wall });
   }
   for (const n of S.npcs) {
-    if (Math.hypot(P.x - n.x, P.z - n.z) < 150) { const want = Math.atan2(-(P.x - n.x), P.z - n.z) / deg; n.heading += ((((want - n.heading) % 360) + 540) % 360 - 180) * 0.08; }
-    const lift = 14 + n.bob * 2 * Math.sin(S.time * 2.5);
-    list.push({ depth: proj(n.x, n.z)[2], obj: n, s: [n.asset + '_stand', 0, n.x, n.z, n.heading, lift], shadow: [n.x, n.z, 14, 0.25], label: n.interact.label, interact: n.interact });
+    if (n.anim !== 'walk' && Math.hypot(P.x - n.x, P.z - n.z) < 150) { const want = Math.atan2(-(P.x - n.x), P.z - n.z) / deg; n.heading += ((((want - n.heading) % 360) + 540) % 360 - 180) * 0.08; }
+    const lift = n.bob ? 14 + n.bob * 2 * Math.sin(S.time * 2.5) : 0;
+    list.push({ depth: proj(n.x, n.z)[2], obj: n, s: [n.asset + '_' + n.anim, Math.floor(n.phase), n.x, n.z, n.heading, lift], shadow: [n.x, n.z, n.bob ? 14 : 16, n.bob ? 0.25 : 0.35], label: n.interact.label, interact: n.interact });
   }
   const me = { depth: proj(P.x, P.z)[2], s: ['witch_' + P.anim, Math.floor(P.phase), P.x, P.z, P.heading, 0], shadow: [P.x, P.z, 16], player: true };
   list.push(me);
@@ -463,6 +520,7 @@ let last = 0;
 function tick(now) {
   const dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now; S.time += dt;
   if (!S.fading && (!S.dialog.length || P.once)) step(dt);       // casts keep playing under dialogue
+  if (!S.fading) stepNpcs(dt);
   if (S.mana < S.maxMana && !P.busy) { S.mana = Math.min(S.maxMana, S.mana + dt * 0.8); if (Math.random() < 0.05) updateQuest(); }
   pickCamera(); updateFx(dt); render();
   requestAnimationFrame(tick);

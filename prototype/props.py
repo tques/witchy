@@ -322,6 +322,49 @@ def thorns(seed=8):
     return p.done()
 
 
+def stump(seed=13):
+    """Hollow tree stump: rings on top, dark hollow, roots, a couple of tiny mushrooms."""
+    p = P(22, 12, 22)
+    m = p.m; cx, cz = p.cx, p.cz; r = _rng(seed)
+    bark, wood, hollow = (112, 80, 56), (196, 156, 104), (52, 38, 32)
+    m.put(m.ell(cx, p.y(9.6), cz, 3.2, 1.2, 3.2), hollow, 'hollow')
+    body = m.lathe(cx, cz, p.y(10), p.y(0) + 1, lambda yy: 6.5 + 1.4 * ((yy - p.y(10)) / 10) ** 2, lambda yy: 6.5 + 1.4 * ((yy - p.y(10)) / 10) ** 2)
+    placed = m.put(body, bark, 'stump')
+    top = placed & (p.h >= 10)
+    ring = np.hypot(p.X - cx, p.Z - cz)
+    m.col[top] = wood
+    m.col[top & (np.round(ring) % 2 == 0)] = (176, 136, 88)
+    m.col[top & (ring > 5.6)] = bark
+    m.col[placed & ~top & ((np.round(np.arctan2(p.X - cx, p.Z - cz) * 5) % 2) == 0)] = (98, 70, 50)   # bark ridges
+    for a in (20, 140, 260):
+        t = math.radians(a)
+        m.put(m.capsule((cx + 5 * math.cos(t), p.y(3), cz + 5 * math.sin(t)), (cx + 10 * math.cos(t), p.y(0), cz + 10 * math.sin(t)), 1.6), bark, 'root')
+    for dx, dz, hh in ((6.5, 3, 3), (7.2, 0.5, 5)):
+        m.put(m.ell(cx + dx, p.y(hh + 1.2), cz + dz, 1.6, 0.9, 1.6), (220, 120, 70), 'cap')
+        m.put(m.capsule((cx + dx, p.y(hh - 1), cz + dz), (cx + dx, p.y(hh + 1), cz + dz), 0.6), (240, 230, 210), 'stem')
+    return p.done()
+
+
+def wildflowers(seed=14):
+    """A loose patch of mixed wild flowers on the grass (no bed): daisies, bluebells, poppies, buttercups."""
+    p = P(28, 9, 22)
+    m = p.m; r = _rng(seed)
+    kinds = [((250, 250, 245), (250, 210, 80)), ((140, 150, 235), None), ((230, 80, 80), (40, 30, 30)),
+             ((250, 220, 70), None), ((235, 150, 205), None), ((190, 130, 230), None)]
+    for i in range(22):
+        x, z = r.uniform(3, 25), r.uniform(3, 19)
+        if ((x - 14) / 12) ** 2 + ((z - 11) / 9) ** 2 > 1:
+            continue
+        hh = r.uniform(3, 6.5)
+        petal, centre = kinds[i % len(kinds)]
+        m.put(m.ball((x, p.y(hh + 1), z), 0.7), centre or petal, 'centre')
+        m.put(m.ell(x, p.y(hh + 1), z, 1.6, 0.8, 1.6), petal, 'petal')
+        m.put(m.capsule((x, p.y(0), z), (x, p.y(hh), z), 0.5), (84, 150, 78), 'stem')
+        if r.random() < 0.6:
+            m.put(m.ell(x + 1, p.y(1.5), z, 1.4, 0.6, 0.8), (96, 168, 84), 'leaf')
+    return p.done()
+
+
 PROPS = {
     'bookshelf': bookshelf, 'cauldron': cauldron, 'table': table, 'bed': bed, 'chest': chest, 'barrel': barrel,
     'tree': tree, 'tree2': lambda: tree(seed=11, height=70), 'bush': bush, 'bush2': lambda: bush(seed=12),
@@ -329,4 +372,5 @@ PROPS = {
     'mushroom': mushroom, 'mushroom_big': lambda: mushroom(seed=10, big=True), 'well': well, 'rocks': rocks,
     'signpost': signpost, 'crystal_dim': crystal, 'crystal_lit': lambda: crystal(lit=True), 'thorns': thorns,
     'fence_x': lambda: fence(24, 'x'), 'fence_z': lambda: fence(24, 'z'),
+    'stump': stump, 'wildflowers': wildflowers, 'wildflowers2': lambda: wildflowers(seed=21),
 }
