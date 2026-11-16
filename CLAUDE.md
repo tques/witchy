@@ -88,3 +88,5 @@ When you write back to a planner room, read it first and pass `if_version`. Keep
 ## Git
 
 The user reviews work on branches and asks for merges into `main`.
+
+**Never merge `claude/trusting-dirac-d8tdu2` into `main`.** That branch holds the sci-fi grav-ball characters (`striker`, `heavyworlder`), a side experiment that doesn't belong in the witch RPG. Keep it as its own branch: don't merge, rebase or cherry-pick it into `main`, and don't open a pull request for it, even if asked to "merge everything".
