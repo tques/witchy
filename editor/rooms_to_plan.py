@@ -19,8 +19,11 @@ from rooms import ROOMS  # noqa: E402
 NAMES = {'bookshelf': 'Bookshelf', 'cauldron': 'Cauldron', 'table': 'Table with candle', 'bed': 'Bed', 'chest': 'Chest',
          'barrel': 'Barrel', 'tree': 'Oak tree', 'tree2': 'Oak tree', 'bush': 'Berry bush', 'bush2': 'Bush',
          'flowerbed': 'Flowerbed', 'flowerbed2': 'Flowerbed', 'mushroom': 'Red mushroom', 'mushroom_big': 'Big red mushroom',
-         'well': 'Stone well', 'rocks': 'Rocks', 'signpost': 'Signpost', 'crystal_dim': 'Heart crystal', 'thorns': 'Thorn barrier'}
-DECOR = {'tree', 'tree2', 'bush', 'bush2', 'flowerbed', 'flowerbed2', 'mushroom', 'mushroom_big', 'rocks', 'thorns', 'barrel'}
+         'well': 'Stone well', 'rocks': 'Rocks', 'signpost': 'Signpost', 'crystal_dim': 'Heart crystal', 'thorns': 'Thorn barrier',
+         'stump': 'Tree stump', 'wildflowers': 'Wild flowers', 'wildflowers2': 'Wild flowers', 'boulder': 'Big Boulder',
+         'pond': 'Lily pond', 'log': 'Fallen mossy log'}
+DECOR = {'tree', 'tree2', 'bush', 'bush2', 'flowerbed', 'flowerbed2', 'mushroom', 'mushroom_big', 'rocks', 'thorns', 'barrel',
+         'wildflowers', 'wildflowers2', 'boulder', 'log'}
 FURNITURE_LIKE = {'bookshelf', 'cauldron', 'table', 'bed', 'well'}
 DETAILS = {   # what the prototype does with each interaction (game.js)
     'bookshelf': 'Clickable. First time: the witch learns the Spark spell from her grimoire.',

@@ -66,16 +66,14 @@ ROOMS = {
                                            dict(kind='path', points=[(0, 60), (36, 60), (58, 58)], width=14)]),
         props=[dict(asset='tree', pos=(18, 18), block=(6, 6)), dict(asset='tree2', pos=(54, 8), block=(6, 6)),
                dict(asset='tree', pos=(96, 6), block=(6, 6)), dict(asset='tree2', pos=(140, 30), block=(6, 6)),
-               dict(asset='tree', pos=(142, 82), block=(6, 6)), dict(asset='bush2', pos=(18, 100), block=(9, 9)),
-               dict(asset='tree', pos=(128, 112), block=(6, 6)),
-               dict(asset='bush', pos=(54, 112), block=(9, 9)), dict(asset='bush2', pos=(92, 114), block=(9, 9)),
+               dict(asset='tree', pos=(142, 82), block=(6, 6)), dict(asset='tree2', pos=(18, 100), block=(6, 6)),
+               dict(asset='tree', pos=(128, 112), block=(6, 6)), dict(asset='tree', pos=(94, 90), block=(6, 6)),
+               dict(asset='bush2', pos=(92, 114), block=(9, 9)),
                dict(asset='bush', pos=(10, 38), block=(9, 9)), dict(asset='rocks', pos=(36, 92), block=(7, 5)),
                dict(asset='thorns', pos=(124, 10), block=(17, 6)),
                dict(asset='crystal_dim', pos=(116, 40), block=(8, 8), swap='crystal_lit',
                     interact=dict(id='crystal', label='The dark crystal', at=(92, 74))),        # cast from a few steps away
-               *[dict(asset='mushroom_big' if i in (2, 6) else 'mushroom',
-                      pos=(round(82 + 24 * math.cos(i * 0.785 + 0.3)), round(58 + 17 * math.sin(i * 0.785 + 0.3))))
-                 for i in range(8) if i != 2]],          # a gap in the ring faces the path
+               *[dict(asset='mushroom', pos=p) for p in ((110, 58), (104, 76), (70, 66), (76, 38), (96, 44))]],   # small ring round the fairy
         npcs=[dict(asset='fairy', pos=(82, 56), face=200, bob=3, interact=dict(id='fairy', label='Talk to the fairy', at=(82, 80)))],
         exits=[dict(rect=(0, 46, 8, 74), to='garden', spawn=(160, 62), face=90, label='Back to the garden')],
         cameras=[dict(zone=None, yaw=-22, tilt=29, zoom=4.0, target=(78, 58))],
