@@ -63,22 +63,22 @@ ROOMS = {
         cameras=[dict(zone=None, yaw=38, tilt=30, zoom=4.0, target=(110, 75))],     # one shot from the south-east corner (planner)
     ),
     'forest': dict(
-        name='Forest Clearing', size=(188, 150), outskirts='trees',
-        floor=dict(style='forest', decals=[dict(kind='clearing', center=(102, 75), radius=52),
+        name='Forest Clearing', size=(320, 220), outskirts='trees',
+        floor=dict(style='forest', decals=[dict(kind='clearing', center=(152, 100), radius=52),
                                            dict(kind='path', points=[(0, 75), (45, 75), (72, 72)], width=14)]),
-        props=[dict(asset='tree', pos=(16, 14), block=(6, 6)), dict(asset='tree2', pos=(68, 10), block=(6, 6)),
-               dict(asset='tree', pos=(120, 8), block=(6, 6)), dict(asset='tree2', pos=(180, 56), block=(6, 6)),
-               dict(asset='tree', pos=(178, 102), block=(6, 6)), dict(asset='tree2', pos=(48, 140), block=(6, 6)),
-               dict(asset='tree', pos=(160, 140), block=(6, 6)), dict(asset='tree', pos=(100, 116), block=(6, 6)),
-               dict(asset='bush2', pos=(115, 142), block=(9, 9)),
-               dict(asset='bush', pos=(12, 48), block=(9, 9)), dict(asset='rocks', pos=(45, 115), block=(7, 5)),
-               dict(asset='thorns', pos=(155, 12), block=(17, 6)),
-               dict(asset='crystal_dim', pos=(146, 38), block=(8, 8), swap='crystal_lit',
-                    interact=dict(id='crystal', label='The dark crystal', at=(122, 64))),        # cast from a few steps away
-               *[dict(asset='mushroom', pos=p) for p in ((148, 78), (120, 104), (74, 86), (80, 40), (128, 40))]],   # small ring round the fairy
-        npcs=[dict(asset='fairy', pos=(102, 70), face=200, bob=3, interact=dict(id='fairy', label='Talk to the fairy', at=(102, 100)))],
-        exits=[dict(rect=(0, 58, 10, 92), to='garden', spawn=(200, 78), face=90, label='Back to the garden')],
-        cameras=[dict(zone=None, yaw=-45, tilt=26, zoom=4.0, target=(98, 75))],     # from the south-west corner, low (planner)
+        props=[dict(asset='tree', pos=(16, 14), block=(6, 6)), dict(asset='tree2', pos=(96, 10), block=(6, 6)),
+               dict(asset='tree', pos=(296, 40), block=(6, 6)), dict(asset='tree2', pos=(264, 116), block=(6, 6)),
+               dict(asset='tree', pos=(276, 186), block=(6, 6)), dict(asset='tree2', pos=(184, 176), block=(6, 6)),
+               dict(asset='tree', pos=(18, 126), block=(6, 6)),
+               dict(asset='bush2', pos=(96, 202), block=(9, 9)),
+               dict(asset='bush', pos=(12, 48), block=(9, 9)), dict(asset='rocks', pos=(76, 174), block=(7, 5)),
+               dict(asset='thorns', pos=(232, 16), block=(17, 6)),
+               dict(asset='crystal_dim', pos=(208, 50), block=(8, 8), swap='crystal_lit',
+                    interact=dict(id='crystal', label='The dark crystal', at=(184, 74))),        # cast from a few steps away
+               *[dict(asset='mushroom', pos=p) for p in ((204, 90), (204, 144), (100, 142), (102, 90), (154, 36))]],   # ring round the fairy
+        npcs=[dict(asset='fairy', pos=(152, 96), face=200, bob=3, interact=dict(id='fairy', label='Talk to the fairy', at=(152, 126)))],
+        exits=[dict(rect=(0, 59, 10, 93), to='garden', spawn=(200, 78), face=90, label='Back to the garden')],
+        cameras=[dict(zone=None, yaw=-45, tilt=26, zoom=4.0, target=(160, 110), follow=True)],   # south-west corner, low, follows
     ),
     'field': dict(
         name='Field', size=(350, 240), outskirts='trees',
