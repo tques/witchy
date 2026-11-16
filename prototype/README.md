@@ -47,6 +47,8 @@ python prototype/build_game.py
 
 *Built for a turning camera later.* Each camera is its settings plus a live pose (yaw, tilt, zoom, centre) that `updateCamera()` advances every frame; drawing, clicking, the floor and the dead zone all read the pose and work at any angle. A `turn` mode would ease `pose.yaw` too. Stack images are cached per angle, so a turning camera should round its yaw (say to 3°) to keep that cache small.
 
+**Out of bounds.** All ground outside the current room is drawn darker (`OUT_OF_BOUNDS` in `game.js`, 0.7), including a neighbouring room's ground and paths, so the walkable area always reads clearly. Props outside keep their normal colours.
+
 **Rendering.**
 - Each room or zone has a fixed camera (yaw, tilt, zoom).
 - Walls on the camera side are cut away, dollhouse style.

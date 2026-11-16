@@ -97,6 +97,7 @@ const P = S.player;
 // round pose.yaw (e.g. to 3 degrees) before drawing and keep the cache bounded.
 const VIEW_SCALE = 1.5;                 // on-screen size: 1.5x the original 960x600 framing, for a 1920x1080 canvas
 const FOLLOW = { dead: [0.16, 0.14], ease: 5 };   // dead zone (fraction of the screen), how quickly it catches up
+const OUT_OF_BOUNDS = 0.7;               // ground outside the current room (neighbours' too) is drawn this much darker
 const GROUND_MARGIN = 560;              // outdoor ground (and neighbours' scenery) painted this far past the edges: enough to fill
                                         // the screen when a following camera reaches a corner
 function setCamera(c) {
@@ -199,7 +200,12 @@ function paintFloor(room) {
   const [W, D] = room.size, outdoor = room.floor.style !== 'wood', M = outdoor ? GROUND_MARGIN : 0, K = room.floor.scale || 1;
   const c = document.createElement('canvas'); c.width = W + 2 * M; c.height = D + 2 * M;
   const g = c.getContext('2d'), img = g.createImageData(c.width, c.height), d = img.data, r = rng(7);
-  const set = (x, y, col) => { x = Math.round(x + M); y = Math.round(y + M); if (x < 0 || y < 0 || x >= c.width || y >= c.height) return; const i = (y * c.width + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; };
+  const set = (x, y, col) => {
+    const wx = Math.round(x), wz = Math.round(y);
+    x = wx + M; y = wz + M; if (x < 0 || y < 0 || x >= c.width || y >= c.height) return;
+    const k = wx < 0 || wz < 0 || wx >= W || wz >= D ? OUT_OF_BOUNDS : 1;        // anything you can't walk on here is darker
+    const i = (y * c.width + x) * 4; d[i] = col[0] * k; d[i + 1] = col[1] * k; d[i + 2] = col[2] * k; d[i + 3] = 255;
+  };
   const jit = (col, a) => { const k = (r() - 0.5) * a; return col.map(v => Math.max(0, Math.min(255, v + k))); };
   const nbs = (room.neighbors || []).map(n => ({ ...n, room: DATA.rooms[n.id] }));
   for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
@@ -209,7 +215,7 @@ function paintFloor(room) {
     else {
       const nb = nbs.find(n => wx >= n.off[0] && wz >= n.off[1] && wx < n.off[0] + n.room.size[0] && wz < n.off[1] + n.room.size[1]);
       if (nb) col = groundColor(nb.room.floor.style, wx - nb.off[0], wz - nb.off[1], K, jit);      // the neighbouring room's own ground
-      else { col = groundColor(room.floor.style, wx, wz, K, jit); if (room.floor.style === 'grass') col = col.map(v => v * 0.82); }
+      else col = groundColor(room.floor.style, wx, wz, K, jit);
     }
     set(wx, wz, col);
   }
