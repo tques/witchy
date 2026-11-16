@@ -125,7 +125,11 @@ dialog textarea { min-height: 50vh; font: 12px/1.5 var(--font-mono) }
     </div>
     <div class="field"><label for="rFloor">Floor</label><input type="text" id="rFloor" placeholder="e.g. wooden planks, mossy flagstones"></div>
     <div class="field"><label for="rNotes">Mood and notes for Claude</label><textarea id="rNotes" placeholder="e.g. Cosy but cluttered. Candlelight. The camera should feel like peeking in from a corner."></textarea></div>
-    <button class="btn danger" id="delRoom">Delete room</button>
+    <div class="row">
+      <button class="btn" id="resetRoom" title="Put this room back the way it was when you opened the planner">Reset room</button>
+      <button class="btn danger" id="delRoom">Delete room</button>
+    </div>
+    <p class="note" id="resetNote" style="margin:0"></p>
   </aside>
 
   <!-- centre: tools + plan -->
@@ -228,10 +232,24 @@ function setStatus(kind, text) { const s = $('status'); s.className = 'status ' 
 function saveLocal() { try { localStorage.setItem('roomPlanner.v1', JSON.stringify({ rooms, current })); } catch (e) {} }
 function loadLocal() { try { const v = JSON.parse(localStorage.getItem('roomPlanner.v1') || 'null'); if (v && v.rooms) { rooms = v.rooms; current = v.current; } } catch (e) {} }
 
+// ---- reset: each room as it was when the planner was opened (or when the room was made this visit)
+const opened = {};
+const stable = v => Array.isArray(v) ? '[' + v.map(stable).join(',') + ']'
+  : v && typeof v === 'object' ? '{' + Object.keys(v).filter(k => k !== 'updated').sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}'
+  : JSON.stringify(v);
+function remember(r) { if (r && !opened[r.id]) opened[r.id] = JSON.parse(JSON.stringify(r)); }
+function changedSinceOpen(r) { return !!(r && opened[r.id] && stable(r) !== stable(opened[r.id])); }
+function updateReset() {
+  const r = room(), b = $('resetRoom'), changed = changedSinceOpen(r);
+  if (!b) return;
+  b.disabled = !changed;
+  if (!resetArmed) $('resetNote').textContent = r && opened[r.id] ? (changed ? 'Reset undoes every change to this room since you opened the planner.' : 'No changes to this room since you opened the planner.') : '';
+}
 function touch(r = room()) {
   if (!r) return;
   r.updated = Date.now();
   saveLocal();
+  setTimeout(updateReset, 0);
   if (mode !== 'db') { setStatus('ok', 'Saved in this browser'); return; }
   dirty.add(r.id); setStatus('busy', 'Saving…');
   clearTimeout(timers[r.id]); timers[r.id] = setTimeout(() => flush(r.id), 700);
@@ -254,7 +272,7 @@ async function removeRoom(id) {
 async function connect() {
   let api = null;
   try { api = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { api = null; }
-  if (!api) { mode = 'local'; setStatus('ok', 'Saving in this browser'); if (!Object.keys(rooms).length) seedBlank(); renderAll(); return; }
+  if (!api) { mode = 'local'; setStatus('ok', 'Saving in this browser'); if (!Object.keys(rooms).length) seedBlank(); Object.values(rooms).forEach(remember); renderAll(); return; }
   db = api; mode = 'db'; setStatus('busy', 'Loading rooms…');
   const timer = setTimeout(() => setStatus('err', 'Shared rooms can’t be reached yet'), 10000);
   db.collection('rooms').onSnapshot(snap => {
@@ -263,6 +281,7 @@ async function connect() {
     for (const d of snap.docs) {
       const r = d.data(); seen[d.id] = true;
       if (!dirty.has(d.id) && !writing.has(d.id)) rooms[d.id] = JSON.parse(JSON.stringify(r));
+      if (!snap.metadata.fromCache) remember(r);          // the room as it was when this visit started
     }
     for (const id of Object.keys(rooms)) if (!seen[id] && !dirty.has(id) && !writing.has(id) && !snap.metadata.fromCache && !pendingNew.has(id)) delete rooms[id];
     if (!Object.keys(rooms).length && !snap.metadata.fromCache) seedBlank();
@@ -272,7 +291,7 @@ async function connect() {
   }, e => { clearTimeout(timer); setStatus('err', 'Shared storage stopped. Changes stay in this browser.'); mode = 'local'; });
 }
 const pendingNew = new Set();
-function seedBlank() { const r = newRoom('First room'); rooms[r.id] = r; current = r.id; pendingNew.add(r.id); }
+function seedBlank() { const r = newRoom('First room'); rooms[r.id] = r; current = r.id; pendingNew.add(r.id); remember(r); }
 
 // ------------------------------------------------------------ geometry: plan view fitted into the canvas
 let view = { s: 4, ox: 40, oy: 40 };
@@ -570,7 +589,7 @@ function renderInspector() {
   $('mDup').onclick = () => { const c = JSON.parse(JSON.stringify(m)); c.id = uid(); if (c.points) c.points = c.points.map(p => [p[0] + 8, p[1] + 8]); else if (c.kind !== 'door') { c.x += 8; c.z += 8; } room().markers.push(c); sel = c.id; touch(); renderAll(); };
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-function renderAll() { renderRooms(); renderRoomForm(); fit(); drawPlan(); renderInspector(); }
+function renderAll() { renderRooms(); renderRoomForm(); fit(); drawPlan(); renderInspector(); updateReset(); }
 
 // room form wiring
 $('rPreset').innerHTML = PRESETS.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
@@ -582,13 +601,29 @@ $('rBound').onchange = e => { room().boundary = e.target.value; touch(); drawPla
 $('rFloor').oninput = e => { room().floor = e.target.value; touch(); };
 $('rNotes').oninput = e => { room().notes = e.target.value; touch(); };
 function clampAll() { const r = room(); for (const m of r.markers) { if (m.kind === 'door') Object.assign(m, edgeSnap(...clampIn(m.x, m.z))); else if (m.points) m.points = m.points.map(p => clampIn(...p)); else if (m.x != null) [m.x, m.z] = clampIn(m.x, m.z); } }
-$('addRoom').onclick = () => { const r = newRoom('New room ' + (Object.keys(rooms).length + 1)); rooms[r.id] = r; current = r.id; sel = null; pendingNew.add(r.id); touch(r); renderAll(); $('rName').focus(); $('rName').select(); };
+$('addRoom').onclick = () => { const r = newRoom('New room ' + (Object.keys(rooms).length + 1)); rooms[r.id] = r; current = r.id; sel = null; pendingNew.add(r.id); remember(r); touch(r); renderAll(); $('rName').focus(); $('rName').select(); };
 let armed = false;
 $('delRoom').onclick = async () => {
   const b = $('delRoom');
   if (!armed) { armed = true; b.classList.add('armed'); b.textContent = 'Click again to delete'; setTimeout(() => { armed = false; b.classList.remove('armed'); b.textContent = 'Delete room'; }, 3000); return; }
   armed = false; b.classList.remove('armed'); b.textContent = 'Delete room';
   const id = current; await removeRoom(id); current = Object.keys(rooms)[0] || null; if (!current) seedBlank(); sel = null; renderAll();
+};
+let resetArmed = false;
+$('resetRoom').onclick = () => {
+  const r = room(), b = $('resetRoom');
+  if (!changedSinceOpen(r)) return;
+  if (!resetArmed) {
+    resetArmed = true; b.classList.add('armed'); b.textContent = 'Click again to reset';
+    $('resetNote').textContent = 'This puts back every marker and setting as it was when you opened the planner.';
+    setTimeout(() => { resetArmed = false; b.classList.remove('armed'); b.textContent = 'Reset room'; updateReset(); }, 3000);
+    return;
+  }
+  resetArmed = false; b.classList.remove('armed'); b.textContent = 'Reset room';
+  const back = JSON.parse(JSON.stringify(opened[r.id]));
+  rooms[r.id] = back; sel = null; draft = null;
+  touch(back); renderAll();
+  $('resetNote').textContent = 'Room reset to how it was when you opened the planner.';
 };
 
 // ------------------------------------------------------------ brief for Claude
@@ -652,7 +687,7 @@ $('importFile').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
     const v = JSON.parse(await f.text());
-    for (const r of v.rooms || []) { r.markers = (r.markers || []).map(m => { const { yaw, tilt, ...rest } = m; return rest; }); rooms[r.id] = r; current = r.id; touch(r); }
+    for (const r of v.rooms || []) { r.markers = (r.markers || []).map(m => { const { yaw, tilt, ...rest } = m; return rest; }); if (!opened[r.id]) remember(rooms[r.id] || r); rooms[r.id] = r; current = r.id; touch(r); }
     $('briefNote').textContent = `Loaded ${(v.rooms || []).length} room(s).`; renderAll();
   } catch (err) { $('briefNote').textContent = 'That file isn’t a room plan. Save one from this page first.'; }
   e.target.value = '';
