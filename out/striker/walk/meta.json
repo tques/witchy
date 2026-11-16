@@ -1,0 +1,21 @@
+{
+ "W": 72,
+ "H": 90,
+ "D": 48,
+ "frames": 8,
+ "fps": 10,
+ "stride": 5.0,
+ "lift": 2.6,
+ "kick": 0.0,
+ "arm": 2.0,
+ "prop_arm": 1.2,
+ "arm_raise": 0.0,
+ "hem": 2.0,
+ "hem_from": 58,
+ "hem_span": 18,
+ "bob": "walk",
+ "lean": 0.0,
+ "trail": 0.0,
+ "speed": 2.5,
+ "layout": "frames left to right; each frame column is H slices of W x D, top to bottom"
+}
