@@ -47,9 +47,10 @@ const S = {
 const P = S.player;
 
 // ------------------------------------------------------------------ camera / projection
+const VIEW_SCALE = 1.5;                 // on-screen size: 1.5x the original 960x600 framing, for a 1920x1080 canvas
 function setCamera(c) {
   S.cam = { ...c, c: Math.cos(c.yaw * deg), s: Math.sin(c.yaw * deg), sn: Math.sin(c.tilt * deg), cs: Math.cos(c.tilt * deg),
-            S: c.zoom, tx: c.target[0], tz: c.target[1] };
+            S: c.zoom * VIEW_SCALE, tx: c.target[0], tz: c.target[1] };
 }
 function proj(x, z, h = 0) {
   const k = S.cam, dx = x - k.tx, dz = z - k.tz;
@@ -116,7 +117,7 @@ function paintFloor(room) {
   const [W, D] = room.size, outdoor = room.floor.style !== 'wood', M = outdoor ? 220 : 0, K = room.floor.scale || 1;
   const c = document.createElement('canvas'); c.width = W + 2 * M; c.height = D + 2 * M;
   const g = c.getContext('2d'), img = g.createImageData(c.width, c.height), d = img.data, r = rng(7);
-  const set = (x, y, col) => { x += M; y += M; if (x < 0 || y < 0 || x >= c.width || y >= c.height) return; const i = (y * c.width + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; };
+  const set = (x, y, col) => { x = Math.round(x + M); y = Math.round(y + M); if (x < 0 || y < 0 || x >= c.width || y >= c.height) return; const i = (y * c.width + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; };
   const jit = (col, a) => { const k = (r() - 0.5) * a; return col.map(v => Math.max(0, Math.min(255, v + k))); };
   const nbs = (room.neighbors || []).map(n => ({ ...n, room: DATA.rooms[n.id] }));
   for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {

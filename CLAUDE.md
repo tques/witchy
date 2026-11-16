@@ -57,7 +57,8 @@ Build characters before the game; the game reads their atlases from `out/`.
 - **Axes:** x runs east, z runs south, (0, 0) is a room's north-west corner, and the ground is height 0.
 - **Facing:** 0 = south (toward the camera side), 90 = west, 180 = north, 270 = east.
 - **Camera yaw (rooms.py):** 0 looks north; positive yaws look north-west. A planner camera's facing `f` becomes yaw `180 − f`.
-- **Wall segments:** walls split into 16-unit segments. Doors and windows must sit inside one segment (e.g. 50–62 or 34–46).
+- **Wall segments:** walls split into 16-unit segments. Doors and windows must sit inside one segment (e.g. 50–62 or 66–78). Doors are 12 wide.
+- **Room sizes:** for the 1920×1080 view, a cosy room is about 140 × 105 and a garden about 220 × 150. Big outdoor rooms need several camera zones.
 - **Thin flat parts:** keep them level, never slightly tilted, or plank stripes appear. Wings and capes are vertical membranes.
 - **Animation:** every frame is the character rebuilt with a pose. Use the presets in `gait.py` and `cast.py`. With no pose, `build()` must produce the approved standing model exactly.
 
@@ -79,7 +80,7 @@ When you write back to a planner room, read it first and pass `if_version`. Keep
   - the back view has shape
 
   Compare with the witch in a lineup.
-- **The game:** drive `prototype/witch_rpg.html` with Playwright:
+- **The game:** drive `prototype/witch_rpg.html` with Playwright, in a 1920×1080 viewport. The canvas is 1920×1080; convert canvas coordinates using its on-screen rectangle:
   - use `window.__S` (state) and `window.__G` (`enterRoom`, `walkTo`, `targetsAt`, `proj`, `interact`, `act`, `findPath`)
   - screenshot every room and camera zone you touched
   - make sure there are no page errors and about 60 fps

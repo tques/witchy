@@ -184,17 +184,17 @@ const KINDS = {
 const SIZES = { S: 'Small', M: 'Medium', L: 'Large' };
 const RADIUS = { S: 3.5, M: 5.5, L: 8.5 };            // rough footprint radius, in units
 const PRESETS = [
-  { id: 'closet', name: 'Closet · 64 × 48', w: 64, d: 48 },
-  { id: 'small', name: 'Small room · 96 × 72', w: 96, d: 72 },
-  { id: 'cottage', name: 'Cottage room · 112 × 84', w: 112, d: 84 },
-  { id: 'medium', name: 'Medium · 128 × 96', w: 128, d: 96 },
-  { id: 'large', name: 'Large · 176 × 120', w: 176, d: 120 },
-  { id: 'hall', name: 'Long hall · 224 × 96', w: 224, d: 96 },
-  { id: 'yard', name: 'Courtyard · 208 × 160', w: 208, d: 160 },
-  { id: 'field', name: 'Field · 176 × 120', w: 176, d: 120 },
-  { id: 'bigfield', name: 'Big field · 224 × 152', w: 224, d: 152 },
-  { id: 'meadow', name: 'Wide meadow · 256 × 176', w: 256, d: 176 },
-  { id: 'openfield', name: 'Open field · 280 × 192', w: 280, d: 192 },
+  // sized for the 1920x1080 game view (rooms were enlarged 1.25x for it)
+  { id: 'closet', name: 'Closet · 80 × 60', w: 80, d: 60 },
+  { id: 'small', name: 'Small room · 120 × 90', w: 120, d: 90 },
+  { id: 'cottage', name: 'Cottage room · 140 × 105', w: 140, d: 105 },
+  { id: 'medium', name: 'Medium · 160 × 120', w: 160, d: 120 },
+  { id: 'large', name: 'Large · 220 × 150', w: 220, d: 150 },
+  { id: 'hall', name: 'Long hall · 280 × 120', w: 280, d: 120 },
+  { id: 'yard', name: 'Courtyard · 260 × 200', w: 260, d: 200 },
+  { id: 'bigfield', name: 'Big field · 280 × 190', w: 280, d: 190 },
+  { id: 'meadow', name: 'Wide meadow · 320 × 220', w: 320, d: 220 },
+  { id: 'openfield', name: 'Open field · 350 × 240', w: 350, d: 240 },
   { id: 'custom', name: 'Custom…', w: 0, d: 0 },
 ];
 const DIRS = [['NW', 135], ['N', 180], ['NE', 225], ['W', 90], null, ['E', 270], ['SW', 45], ['S', 0], ['SE', 315]];

@@ -7,8 +7,8 @@
    "name": "Witch's Cottage",
    "preset": "custom",
    "size": [
-    112,
-    84
+    140,
+    105
    ],
    "setting": "interior",
    "boundary": "walls",
@@ -20,8 +20,8 @@
      "kind": "spawn",
      "label": "Player start",
      "details": "",
-     "x": 74,
-     "z": 66,
+     "x": 92,
+     "z": 82,
      "size": "M",
      "face": 160
     },
@@ -30,8 +30,8 @@
      "kind": "furniture",
      "label": "Bookshelf",
      "details": "Clickable. First time: the witch learns the Spark spell from her grimoire.",
-     "x": 22,
-     "z": 8,
+     "x": 28,
+     "z": 10,
      "size": "L",
      "face": 0
     },
@@ -40,8 +40,8 @@
      "kind": "furniture",
      "label": "Cauldron",
      "details": "Clickable. Flavour line: the brew smells of mint and thunder. Green brew glows.",
-     "x": 58,
-     "z": 46,
+     "x": 72,
+     "z": 58,
      "size": "L",
      "face": 0
     },
@@ -50,8 +50,8 @@
      "kind": "furniture",
      "label": "Table with candle",
      "details": "Clickable. Holds the fairy's note that starts the quest.",
-     "x": 90,
-     "z": 22,
+     "x": 112,
+     "z": 28,
      "size": "L",
      "face": 0
     },
@@ -60,8 +60,8 @@
      "kind": "furniture",
      "label": "Bed",
      "details": "Clickable. Flavour line: no napping now.",
-     "x": 15,
-     "z": 56,
+     "x": 19,
+     "z": 70,
      "size": "L",
      "face": 0
     },
@@ -70,8 +70,8 @@
      "kind": "item",
      "label": "Chest",
      "details": "Clickable. First time: gives a mana potion.",
-     "x": 94,
-     "z": 68,
+     "x": 118,
+     "z": 85,
      "size": "M",
      "face": 0
     },
@@ -80,8 +80,8 @@
      "kind": "decoration",
      "label": "Barrel",
      "details": "",
-     "x": 102,
-     "z": 11,
+     "x": 128,
+     "z": 14,
      "size": "M",
      "face": null
     },
@@ -91,7 +91,7 @@
      "label": "Go outside",
      "details": "",
      "edge": "N",
-     "x": 56,
+     "x": 72,
      "z": 0,
      "width": 12,
      "to": "garden"
@@ -102,7 +102,7 @@
      "label": "Window",
      "details": "Window in the wall here.",
      "x": 0,
-     "z": 44,
+     "z": 60,
      "size": "S",
      "face": null
     },
@@ -111,8 +111,8 @@
      "kind": "camera",
      "label": "Camera",
      "details": "Fixed angle (rooms.py: yaw 32, tilt 36, zoom 4.4).",
-     "x": 88,
-     "z": 84,
+     "x": 102,
+     "z": 105,
      "face": 148,
      "height": "high"
     },
@@ -121,10 +121,10 @@
      "kind": "area",
      "label": "Purple rug",
      "details": "Purple with a gold border.",
-     "x": 36,
-     "z": 30,
-     "w": 46,
-     "d": 34
+     "x": 45,
+     "z": 38,
+     "w": 57,
+     "d": 42
     }
    ],
    "updated": 0
@@ -134,8 +134,8 @@
    "name": "Garden",
    "preset": "custom",
    "size": [
-    176,
-    120
+    220,
+    150
    ],
    "setting": "exterior",
    "boundary": "fence",
@@ -147,8 +147,8 @@
      "kind": "furniture",
      "label": "Stone well",
      "details": "Clickable. A voice hints at the fairy past the eastern gate.",
-     "x": 128,
-     "z": 30,
+     "x": 160,
+     "z": 38,
      "size": "L",
      "face": 0
     },
@@ -157,8 +157,8 @@
      "kind": "decoration",
      "label": "Flowerbed",
      "details": "",
-     "x": 30,
-     "z": 16,
+     "x": 38,
+     "z": 20,
      "size": "L",
      "face": null
     },
@@ -167,8 +167,8 @@
      "kind": "decoration",
      "label": "Flowerbed",
      "details": "",
-     "x": 88,
-     "z": 16,
+     "x": 110,
+     "z": 20,
      "size": "L",
      "face": null
     },
@@ -177,8 +177,8 @@
      "kind": "decoration",
      "label": "Barrel",
      "details": "",
-     "x": 106,
-     "z": 14,
+     "x": 132,
+     "z": 18,
      "size": "M",
      "face": null
     },
@@ -187,8 +187,8 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 20,
-     "z": 96,
+     "x": 25,
+     "z": 120,
      "size": "M",
      "face": null
     },
@@ -197,8 +197,8 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 154,
-     "z": 98,
+     "x": 192,
+     "z": 122,
      "size": "M",
      "face": null
     },
@@ -207,8 +207,8 @@
      "kind": "decoration",
      "label": "Berry bush",
      "details": "",
-     "x": 92,
-     "z": 104,
+     "x": 115,
+     "z": 130,
      "size": "M",
      "face": null
     },
@@ -217,8 +217,8 @@
      "kind": "decoration",
      "label": "Bush",
      "details": "",
-     "x": 50,
-     "z": 106,
+     "x": 62,
+     "z": 132,
      "size": "M",
      "face": null
     },
@@ -227,8 +227,8 @@
      "kind": "decoration",
      "label": "Red mushroom",
      "details": "",
-     "x": 36,
-     "z": 82,
+     "x": 45,
+     "z": 102,
      "size": "S",
      "face": null
     },
@@ -237,8 +237,8 @@
      "kind": "decoration",
      "label": "Red mushroom",
      "details": "",
-     "x": 42,
-     "z": 88,
+     "x": 52,
+     "z": 110,
      "size": "S",
      "face": null
     },
@@ -247,8 +247,8 @@
      "kind": "decoration",
      "label": "Rocks",
      "details": "",
-     "x": 118,
-     "z": 96,
+     "x": 148,
+     "z": 120,
      "size": "M",
      "face": null
     },
@@ -257,8 +257,8 @@
      "kind": "item",
      "label": "Signpost",
      "details": "Clickable. Reads \"\u2192 Whispering Forest\".",
-     "x": 160,
-     "z": 46,
+     "x": 200,
+     "z": 58,
      "size": "S",
      "face": 0
     },
@@ -268,7 +268,7 @@
      "label": "Go inside",
      "details": "",
      "edge": "N",
-     "x": 56,
+     "x": 70,
      "z": 0,
      "width": 12,
      "to": "cottage"
@@ -279,23 +279,34 @@
      "label": "To the forest",
      "details": "",
      "edge": "E",
-     "x": 176,
-     "z": 62,
-     "width": 28,
+     "x": 220,
+     "z": 78,
+     "width": 35,
      "to": "forest"
     },
     {
      "id": "garden-15",
+     "kind": "door",
+     "label": "To the field",
+     "details": "",
+     "edge": "S",
+     "x": 87,
+     "z": 150,
+     "width": 30,
+     "to": "field"
+    },
+    {
+     "id": "garden-16",
      "kind": "note",
      "label": "Window",
      "details": "Window in the wall here.",
-     "x": 88,
+     "x": 104,
      "z": 0,
      "size": "S",
      "face": null
     },
     {
-     "id": "garden-16",
+     "id": "garden-17",
      "kind": "area",
      "label": "Cottage outer wall (stone)",
      "details": "Stone wall with the cottage door and a window.",
@@ -305,70 +316,70 @@
      "d": 4
     },
     {
-     "id": "garden-17",
+     "id": "garden-18",
      "kind": "camera",
      "label": "Camera A",
      "details": "Fixed angle (rooms.py: yaw -28, tilt 34, zoom 4.0).",
-     "x": 26,
-     "z": 109,
+     "x": 40,
+     "z": 123,
      "face": 208,
      "height": "medium"
     },
     {
-     "id": "garden-18",
+     "id": "garden-19",
      "kind": "area",
      "label": "Camera A zone",
      "details": "Camera A is used while the player is in here.",
      "x": 0,
      "z": 0,
-     "w": 88,
-     "d": 120
+     "w": 110,
+     "d": 150
     },
     {
-     "id": "garden-19",
+     "id": "garden-20",
      "kind": "camera",
      "label": "Camera B",
      "details": "Fixed angle (rooms.py: yaw 38, tilt 30, zoom 4.0).",
-     "x": 163,
-     "z": 107,
+     "x": 195,
+     "z": 122,
      "face": 142,
      "height": "medium"
     },
     {
-     "id": "garden-20",
+     "id": "garden-21",
      "kind": "area",
      "label": "Camera B zone",
      "details": "Camera B is used while the player is in here.",
-     "x": 88,
+     "x": 110,
      "z": 0,
-     "w": 88,
-     "d": 120
+     "w": 110,
+     "d": 150
     },
     {
-     "id": "garden-21",
+     "id": "garden-22",
      "kind": "path",
      "label": "Stone path",
      "details": "",
      "points": [
       [
-       56,
-       6
+       70,
+       8
       ],
       [
-       58,
-       36
+       72,
+       45
       ],
       [
-       84,
-       58
+       105,
+       72
       ],
       [
-       130,
-       62
+       162,
+       78
       ],
       [
-       176,
-       62
+       220,
+       78
       ]
      ],
      "width": 14
@@ -381,8 +392,8 @@
    "name": "Forest Clearing",
    "preset": "custom",
    "size": [
-    150,
-    120
+    188,
+    150
    ],
    "setting": "exterior",
    "boundary": "trees",
@@ -394,8 +405,8 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 18,
-     "z": 18,
+     "x": 22,
+     "z": 22,
      "size": "M",
      "face": null
     },
@@ -404,8 +415,8 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 54,
-     "z": 8,
+     "x": 68,
+     "z": 10,
      "size": "M",
      "face": null
     },
@@ -414,8 +425,8 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 96,
-     "z": 6,
+     "x": 120,
+     "z": 8,
      "size": "M",
      "face": null
     },
@@ -424,8 +435,8 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 140,
-     "z": 30,
+     "x": 175,
+     "z": 38,
      "size": "M",
      "face": null
     },
@@ -434,18 +445,18 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 142,
-     "z": 82,
+     "x": 178,
+     "z": 102,
      "size": "M",
      "face": null
     },
     {
      "id": "forest-6",
      "kind": "decoration",
-     "label": "Bush",
+     "label": "Oak tree",
      "details": "",
-     "x": 18,
-     "z": 100,
+     "x": 22,
+     "z": 125,
      "size": "M",
      "face": null
     },
@@ -454,17 +465,17 @@
      "kind": "decoration",
      "label": "Oak tree",
      "details": "",
-     "x": 128,
-     "z": 112,
+     "x": 160,
+     "z": 140,
      "size": "M",
      "face": null
     },
     {
      "id": "forest-8",
      "kind": "decoration",
-     "label": "Berry bush",
+     "label": "Oak tree",
      "details": "",
-     "x": 54,
+     "x": 118,
      "z": 112,
      "size": "M",
      "face": null
@@ -474,8 +485,8 @@
      "kind": "decoration",
      "label": "Bush",
      "details": "",
-     "x": 92,
-     "z": 114,
+     "x": 115,
+     "z": 142,
      "size": "M",
      "face": null
     },
@@ -484,8 +495,8 @@
      "kind": "decoration",
      "label": "Berry bush",
      "details": "",
-     "x": 10,
-     "z": 38,
+     "x": 12,
+     "z": 48,
      "size": "M",
      "face": null
     },
@@ -494,8 +505,8 @@
      "kind": "decoration",
      "label": "Rocks",
      "details": "",
-     "x": 36,
-     "z": 92,
+     "x": 45,
+     "z": 115,
      "size": "M",
      "face": null
     },
@@ -504,8 +515,8 @@
      "kind": "decoration",
      "label": "Thorn barrier",
      "details": "",
-     "x": 124,
-     "z": 10,
+     "x": 155,
+     "z": 12,
      "size": "L",
      "face": null
     },
@@ -514,8 +525,8 @@
      "kind": "item",
      "label": "Heart crystal",
      "details": "Cast Spark at it: it lights up and the thorn barrier disappears. Dark until then.",
-     "x": 116,
-     "z": 40,
+     "x": 145,
+     "z": 50,
      "size": "M",
      "face": 0
     },
@@ -524,8 +535,8 @@
      "kind": "decoration",
      "label": "Red mushroom",
      "details": "",
-     "x": 105,
-     "z": 63,
+     "x": 138,
+     "z": 72,
      "size": "S",
      "face": null
     },
@@ -534,8 +545,8 @@
      "kind": "decoration",
      "label": "Red mushroom",
      "details": "",
-     "x": 93,
-     "z": 73,
+     "x": 130,
+     "z": 95,
      "size": "S",
      "face": null
     },
@@ -544,8 +555,8 @@
      "kind": "decoration",
      "label": "Red mushroom",
      "details": "",
-     "x": 61,
-     "z": 66,
+     "x": 88,
+     "z": 82,
      "size": "S",
      "face": null
     },
@@ -554,8 +565,8 @@
      "kind": "decoration",
      "label": "Red mushroom",
      "details": "",
-     "x": 59,
-     "z": 53,
+     "x": 95,
+     "z": 48,
      "size": "S",
      "face": null
     },
@@ -564,92 +575,519 @@
      "kind": "decoration",
      "label": "Red mushroom",
      "details": "",
-     "x": 71,
-     "z": 43,
+     "x": 120,
+     "z": 55,
      "size": "S",
      "face": null
     },
     {
      "id": "forest-19",
-     "kind": "decoration",
-     "label": "Big red mushroom",
-     "details": "",
-     "x": 89,
-     "z": 42,
-     "size": "S",
-     "face": null
-    },
-    {
-     "id": "forest-20",
-     "kind": "decoration",
-     "label": "Red mushroom",
-     "details": "",
-     "x": 103,
-     "z": 50,
-     "size": "S",
-     "face": null
-    },
-    {
-     "id": "forest-21",
      "kind": "npc",
      "label": "Fairy",
      "details": "Quest giver. Asks the witch to rekindle the heart crystal; thanks her afterwards. Floats and turns to face the player.",
-     "x": 82,
-     "z": 56,
+     "x": 102,
+     "z": 70,
      "size": "M",
      "face": 200
     },
     {
-     "id": "forest-22",
+     "id": "forest-20",
      "kind": "door",
      "label": "Back to the garden",
      "details": "",
      "edge": "W",
      "x": 0,
-     "z": 60,
-     "width": 28,
+     "z": 75,
+     "width": 34,
      "to": "garden"
     },
     {
-     "id": "forest-23",
+     "id": "forest-21",
      "kind": "camera",
      "label": "Camera",
      "details": "Fixed angle (rooms.py: yaw -22, tilt 29, zoom 4.0).",
-     "x": 56,
-     "z": 114,
+     "x": 76,
+     "z": 128,
      "face": 202,
      "height": "low"
     },
     {
-     "id": "forest-24",
+     "id": "forest-22",
      "kind": "area",
      "label": "Dirt clearing (round)",
      "details": "Roughly circular patch of bare earth.",
-     "x": 40,
-     "z": 23,
-     "w": 84,
-     "d": 73
+     "x": 50,
+     "z": 30,
+     "w": 104,
+     "d": 90
     },
     {
-     "id": "forest-25",
+     "id": "forest-23",
      "kind": "path",
      "label": "Stone path",
      "details": "",
      "points": [
       [
        0,
-       60
+       75
       ],
       [
-       36,
-       60
+       45,
+       75
       ],
       [
-       58,
-       58
+       72,
+       72
       ]
      ],
      "width": 14
+    }
+   ],
+   "updated": 0
+  },
+  {
+   "id": "field",
+   "name": "Field",
+   "preset": "custom",
+   "size": [
+    350,
+    240
+   ],
+   "setting": "exterior",
+   "boundary": "trees",
+   "floor": "",
+   "notes": "",
+   "markers": [
+    {
+     "id": "field-1",
+     "kind": "item",
+     "label": "Tree stump",
+     "details": "Examine the tree stump",
+     "x": 91,
+     "z": 92,
+     "size": "M",
+     "face": 0
+    },
+    {
+     "id": "field-2",
+     "kind": "decoration",
+     "label": "Big Boulder",
+     "details": "",
+     "x": 175,
+     "z": 112,
+     "size": "L",
+     "face": null
+    },
+    {
+     "id": "field-3",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 36,
+     "z": 52,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-4",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 40,
+     "z": 180,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-5",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 259,
+     "z": 36,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-6",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 262,
+     "z": 180,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-7",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 314,
+     "z": 72,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-8",
+     "kind": "item",
+     "label": "Lily pond",
+     "details": "Look into the pond",
+     "x": 130,
+     "z": 182,
+     "size": "L",
+     "face": 0
+    },
+    {
+     "id": "field-9",
+     "kind": "decoration",
+     "label": "Fallen mossy log",
+     "details": "",
+     "x": 245,
+     "z": 140,
+     "size": "L",
+     "face": null
+    },
+    {
+     "id": "field-10",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 148,
+     "z": 50,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-11",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 200,
+     "z": 210,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-12",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 320,
+     "z": 138,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-13",
+     "kind": "decoration",
+     "label": "Wild flowers",
+     "details": "",
+     "x": 75,
+     "z": 148,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-14",
+     "kind": "decoration",
+     "label": "Rocks",
+     "details": "",
+     "x": 45,
+     "z": 125,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-15",
+     "kind": "decoration",
+     "label": "Rocks",
+     "details": "",
+     "x": 308,
+     "z": 208,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-16",
+     "kind": "decoration",
+     "label": "Rocks",
+     "details": "",
+     "x": 208,
+     "z": 82,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-17",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 220,
+     "z": 50,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-18",
+     "kind": "decoration",
+     "label": "Big red mushroom",
+     "details": "",
+     "x": 226,
+     "z": 56,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-19",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 215,
+     "z": 59,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-20",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 72,
+     "z": 220,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-21",
+     "kind": "decoration",
+     "label": "Red mushroom",
+     "details": "",
+     "x": 79,
+     "z": 226,
+     "size": "S",
+     "face": null
+    },
+    {
+     "id": "field-22",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 120,
+     "z": 82,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-23",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 295,
+     "z": 102,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-24",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 228,
+     "z": 10,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-25",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 282,
+     "z": 5,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-26",
+     "kind": "decoration",
+     "label": "Oak tree",
+     "details": "",
+     "x": 335,
+     "z": 12,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-27",
+     "kind": "decoration",
+     "label": "Berry bush",
+     "details": "",
+     "x": 10,
+     "z": 88,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-28",
+     "kind": "decoration",
+     "label": "Bush",
+     "details": "",
+     "x": 10,
+     "z": 160,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-29",
+     "kind": "decoration",
+     "label": "Berry bush",
+     "details": "",
+     "x": 340,
+     "z": 70,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-30",
+     "kind": "decoration",
+     "label": "Bush",
+     "details": "",
+     "x": 340,
+     "z": 170,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-31",
+     "kind": "decoration",
+     "label": "Berry bush",
+     "details": "",
+     "x": 58,
+     "z": 232,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-32",
+     "kind": "decoration",
+     "label": "Bush",
+     "details": "",
+     "x": 165,
+     "z": 235,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-33",
+     "kind": "decoration",
+     "label": "Berry bush",
+     "details": "",
+     "x": 278,
+     "z": 232,
+     "size": "M",
+     "face": null
+    },
+    {
+     "id": "field-34",
+     "kind": "npc",
+     "label": "Wizard",
+     "details": "",
+     "x": 262,
+     "z": 120,
+     "size": "M",
+     "face": 0
+    },
+    {
+     "id": "field-35",
+     "kind": "door",
+     "label": "Back to the garden",
+     "details": "",
+     "edge": "N",
+     "x": 67,
+     "z": 0,
+     "width": 30,
+     "to": "garden"
+    },
+    {
+     "id": "field-36",
+     "kind": "camera",
+     "label": "Camera A",
+     "details": "Fixed angle (rooms.py: yaw -45, tilt 32, zoom 3.6).",
+     "x": 46,
+     "z": 214,
+     "face": 225,
+     "height": "medium"
+    },
+    {
+     "id": "field-37",
+     "kind": "area",
+     "label": "Camera A zone",
+     "details": "Camera A is used while the player is in here.",
+     "x": 0,
+     "z": 120,
+     "w": 175,
+     "d": 120
+    },
+    {
+     "id": "field-38",
+     "kind": "camera",
+     "label": "Camera B",
+     "details": "Fixed angle (rooms.py: yaw 45, tilt 32, zoom 3.6).",
+     "x": 304,
+     "z": 214,
+     "face": 135,
+     "height": "medium"
+    },
+    {
+     "id": "field-39",
+     "kind": "area",
+     "label": "Camera B zone",
+     "details": "Camera B is used while the player is in here.",
+     "x": 175,
+     "z": 120,
+     "w": 175,
+     "d": 120
+    },
+    {
+     "id": "field-40",
+     "kind": "camera",
+     "label": "Camera C",
+     "details": "Fixed angle (rooms.py: yaw -30, tilt 34, zoom 3.6).",
+     "x": 58,
+     "z": 120,
+     "face": 210,
+     "height": "medium"
+    },
+    {
+     "id": "field-41",
+     "kind": "area",
+     "label": "Camera C zone",
+     "details": "Camera C is used while the player is in here.",
+     "x": 0,
+     "z": 0,
+     "w": 175,
+     "d": 120
+    },
+    {
+     "id": "field-42",
+     "kind": "camera",
+     "label": "Camera D",
+     "details": "Fixed angle (rooms.py: yaw 30, tilt 34, zoom 3.6).",
+     "x": 292,
+     "z": 120,
+     "face": 150,
+     "height": "medium"
+    },
+    {
+     "id": "field-43",
+     "kind": "area",
+     "label": "Camera D zone",
+     "details": "Camera D is used while the player is in here.",
+     "x": 175,
+     "z": 0,
+     "w": 175,
+     "d": 120
     }
    ],
    "updated": 0

@@ -41,6 +41,8 @@ python prototype/build_game.py
 
 **Scale.** Characters are one cube per sprite pixel, about 88 cubes tall. Rooms and props are designed in smaller base units and enlarged by `WORLD_SCALE` (2.5) at bake time, using `Model.scaled()`. That keeps props in proportion to the characters, and the lighting is computed at full resolution.
 
+**Screen size.** The game renders at 1920 × 1080 and scales to fit the browser window. `VIEW_SCALE` in `game.js` (1.5) sets how big the world is drawn on screen; at 1080p the witch is about 180 pixels tall. Rooms were laid out 1.25× larger for this view, so they fill the screen without feeling cramped.
+
 **Rendering.**
 - Each room or zone has a fixed camera (yaw, tilt, zoom).
 - Walls on the camera side are cut away, dollhouse style.

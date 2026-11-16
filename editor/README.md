@@ -33,7 +33,7 @@ Every marker has a **label** (what it is) and **details** (anything Claude shoul
   - yaw = 180 − facing
   - tilt: low 26, medium 32, high 38
   - Claude picks the zoom and the target.
-- **Size presets:** 64×48, 96×72, 112×84 (the cottage), 128×96, 176×120, 224×96 and 208×160, or a custom size in steps of 2.
+- **Size presets** (sized for the 1920×1080 game view): 80×60, 120×90, 140×105 (the cottage), 160×120, 220×150 (the garden), 280×120, 260×200, 280×190, 320×220 and 350×240 (the field), or a custom size in steps of 2.
 
 ## Files
 
