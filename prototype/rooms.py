@@ -60,26 +60,25 @@ ROOMS = {
         exits=[dict(rect=(64, 0, 76, 10), to='cottage', spawn=(70, 22), face=0, label='Go inside'),
                dict(rect=(210, 60, 220, 95), to='forest', spawn=(18, 75), face=270, label='To the forest'),
                dict(rect=(72, 140, 102, 150), to='field', spawn=(68, 22), face=0, label='To the field')],
-        cameras=[dict(zone=(0, 0, 110, 150), yaw=-28, tilt=34, zoom=4.0, target=(68, 70)),
-                 dict(zone=(110, 0, 220, 150), yaw=38, tilt=30, zoom=4.0, target=(158, 75))],
+        cameras=[dict(zone=None, yaw=38, tilt=30, zoom=4.0, target=(110, 75))],     # one shot from the south-east corner (planner)
     ),
     'forest': dict(
         name='Forest Clearing', size=(188, 150), outskirts='trees',
         floor=dict(style='forest', decals=[dict(kind='clearing', center=(102, 75), radius=52),
                                            dict(kind='path', points=[(0, 75), (45, 75), (72, 72)], width=14)]),
-        props=[dict(asset='tree', pos=(22, 22), block=(6, 6)), dict(asset='tree2', pos=(68, 10), block=(6, 6)),
-               dict(asset='tree', pos=(120, 8), block=(6, 6)), dict(asset='tree2', pos=(175, 38), block=(6, 6)),
-               dict(asset='tree', pos=(178, 102), block=(6, 6)), dict(asset='tree2', pos=(22, 125), block=(6, 6)),
-               dict(asset='tree', pos=(160, 140), block=(6, 6)), dict(asset='tree', pos=(118, 112), block=(6, 6)),
+        props=[dict(asset='tree', pos=(16, 14), block=(6, 6)), dict(asset='tree2', pos=(68, 10), block=(6, 6)),
+               dict(asset='tree', pos=(120, 8), block=(6, 6)), dict(asset='tree2', pos=(180, 56), block=(6, 6)),
+               dict(asset='tree', pos=(178, 102), block=(6, 6)), dict(asset='tree2', pos=(48, 140), block=(6, 6)),
+               dict(asset='tree', pos=(160, 140), block=(6, 6)), dict(asset='tree', pos=(100, 116), block=(6, 6)),
                dict(asset='bush2', pos=(115, 142), block=(9, 9)),
                dict(asset='bush', pos=(12, 48), block=(9, 9)), dict(asset='rocks', pos=(45, 115), block=(7, 5)),
                dict(asset='thorns', pos=(155, 12), block=(17, 6)),
-               dict(asset='crystal_dim', pos=(145, 50), block=(8, 8), swap='crystal_lit',
-                    interact=dict(id='crystal', label='The dark crystal', at=(115, 92))),        # cast from a few steps away
-               *[dict(asset='mushroom', pos=p) for p in ((138, 72), (130, 95), (88, 82), (95, 48), (120, 55))]],   # small ring round the fairy
+               dict(asset='crystal_dim', pos=(146, 38), block=(8, 8), swap='crystal_lit',
+                    interact=dict(id='crystal', label='The dark crystal', at=(122, 64))),        # cast from a few steps away
+               *[dict(asset='mushroom', pos=p) for p in ((148, 78), (120, 104), (74, 86), (80, 40), (128, 40))]],   # small ring round the fairy
         npcs=[dict(asset='fairy', pos=(102, 70), face=200, bob=3, interact=dict(id='fairy', label='Talk to the fairy', at=(102, 100)))],
         exits=[dict(rect=(0, 58, 10, 92), to='garden', spawn=(200, 78), face=90, label='Back to the garden')],
-        cameras=[dict(zone=None, yaw=-22, tilt=29, zoom=4.0, target=(98, 72))],
+        cameras=[dict(zone=None, yaw=-45, tilt=26, zoom=4.0, target=(98, 75))],     # from the south-west corner, low (planner)
     ),
     'field': dict(
         name='Field', size=(350, 240), outskirts='trees',
@@ -113,7 +112,7 @@ ROOMS = {
                    interact=dict(id='wizard', label='Talk to the wizard', at=(262, 140)))],
         exits=[dict(rect=(52, 0, 82, 12), to='garden', spawn=(88, 130), face=180, label='Back to the garden')],
         # two halves, each seen from its southern corner (from the planner)
-        cameras=[dict(zone=(0, 0, 174, 240), yaw=-45, tilt=32, zoom=4.0, target=(87, 120), follow=True),     # A: south-west corner, looking north-east
-                 dict(zone=(174, 0, 350, 240), yaw=45, tilt=32, zoom=4.0, target=(262, 120), follow=True)],  # B: south-east corner, looking north-west
+        cameras=[dict(zone=(0, 0, 176, 240), yaw=-45, tilt=32, zoom=4.0, target=(88, 120), follow=True),     # A: south-west corner, looking north-east
+                 dict(zone=(176, 0, 350, 240), yaw=45, tilt=32, zoom=4.0, target=(263, 120), follow=True)],  # B: south-east corner, looking north-west
     ),
 }
