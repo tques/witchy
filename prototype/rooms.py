@@ -109,10 +109,8 @@ ROOMS = {
         npcs=[dict(asset='wizard', pos=(262, 120), face=0, wander=dict(radius=60, pause=(1.5, 4.0)),
                    interact=dict(id='wizard', label='Talk to the wizard', at=(262, 140)))],
         exits=[dict(rect=(52, 0, 82, 12), to='garden', spawn=(88, 130), face=180, label='Back to the garden')],
-        # four quadrants, each with its own fixed angle; all look north-ish so the tree edge stays at the back
-        cameras=[dict(zone=(0, 120, 175, 240), yaw=-45, tilt=32, zoom=3.6, target=(88, 172)),
-                 dict(zone=(175, 120, 350, 240), yaw=45, tilt=32, zoom=3.6, target=(262, 172)),
-                 dict(zone=(0, 0, 175, 120), yaw=-30, tilt=34, zoom=3.6, target=(88, 68)),
-                 dict(zone=(175, 0, 350, 120), yaw=30, tilt=34, zoom=3.6, target=(262, 68))],
+        # two halves, each seen from its southern corner (from the planner)
+        cameras=[dict(zone=(0, 0, 174, 240), yaw=-45, tilt=32, zoom=3.6, target=(87, 120)),     # A: south-west corner, looking north-east
+                 dict(zone=(174, 0, 350, 240), yaw=45, tilt=32, zoom=3.6, target=(262, 120))],  # B: south-east corner, looking north-west
     ),
 }
