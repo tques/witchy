@@ -43,6 +43,10 @@ python prototype/build_game.py
 
 **Screen size.** The game renders at 1920 × 1080 and scales to fit the browser window. `VIEW_SCALE` in `game.js` (1.5) sets how big the world is drawn on screen; at 1080p the witch is about 180 pixels tall. Rooms were laid out 1.25× larger for this view, so they fill the screen without feeling cramped.
 
+**Cameras.** Each camera zone has a camera that is either a **fixed shot** (interiors, composed views) or **follows** the player (`follow=True` in `rooms.py`, "Follows player" in the planner). A following camera keeps its angle and only slides: she can move inside a dead zone in the middle of the screen, then it eases after her, stops at the room's edges, and moves in whole pixels so the art doesn't shimmer. Crossing into another zone still cuts to that zone's camera. Rooms with `outskirts='trees'` get a look-only border of trees just outside their edges (bushes and rocks on the camera's south side), so a following camera never shows bare ground at the edge.
+
+*Built for a turning camera later.* Each camera is its settings plus a live pose (yaw, tilt, zoom, centre) that `updateCamera()` advances every frame; drawing, clicking, the floor and the dead zone all read the pose and work at any angle. A `turn` mode would ease `pose.yaw` too. Stack images are cached per angle, so a turning camera should round its yaw (say to 3°) to keep that cache small.
+
 **Rendering.**
 - Each room or zone has a fixed camera (yaw, tilt, zoom).
 - Walls on the camera side are cut away, dollhouse style.

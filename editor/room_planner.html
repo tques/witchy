@@ -372,7 +372,7 @@ function drawMarker(m, on) {
     ctx.fillStyle = c; ctx.fillRect(X - 7 * dpr, Y - 5 * dpr, 14 * dpr, 10 * dpr);
     ctx.strokeStyle = c; ctx.lineWidth = 2 * dpr; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + vx * 16 * view.s, Y + vz * 16 * view.s); ctx.stroke();
     if (on) { const [hx, hy] = [X + vx * 16 * view.s, Y + vz * 16 * view.s]; ctx.beginPath(); ctx.arc(hx, hy, 6 * dpr, 0, 7); ctx.fill(); }
-    labelAt(m.label || 'Camera', X, Y + 22 * dpr, css('--ink'), on);
+    labelAt((m.label || 'Camera') + (m.follow ? ' · follows' : ''), X, Y + 22 * dpr, css('--ink'), on);
     return;
   }
   const r = Math.max(7 * dpr, RADIUS[m.size || 'M'] * view.s);
@@ -550,7 +550,8 @@ function renderInspector() {
     ${m.kind === 'path' ? `<div class="field"><label for="mWidth">Width</label><input type="number" id="mWidth" min="4" max="60" step="2"></div>` : ''}
     ${m.kind === 'area' ? `<div class="row"><div class="field"><label for="mW">Width</label><input type="number" id="mW" min="4" step="2"></div><div class="field"><label for="mD">Depth</label><input type="number" id="mD" min="4" step="2"></div></div>` : ''}
     ${['decoration', 'furniture', 'npc', 'enemy', 'item', 'spawn', 'note'].includes(m.kind) ? `<div class="field"><span class="lbl">Size</span><div class="seg" id="mSize">${Object.entries(SIZES).map(([v, n]) => `<button data-v="${v}" class="${(m.size || 'M') === v ? 'on' : ''}">${n}</button>`).join('')}</div></div>` : ''}
-    ${m.kind === 'camera' ? `<div class="field"><span class="lbl">Height</span><div class="seg" id="mHeight">${Object.keys(HEIGHTS).map(v => `<button data-v="${v}" class="${(m.height || 'medium') === v ? 'on' : ''}">${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}</div></div>` : ''}
+    ${m.kind === 'camera' ? `<div class="field"><span class="lbl">Height</span><div class="seg" id="mHeight">${Object.keys(HEIGHTS).map(v => `<button data-v="${v}" class="${(m.height || 'medium') === v ? 'on' : ''}">${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}</div></div>
+      <div class="field"><span class="lbl">Movement</span><div class="seg" id="mFollow"><button data-v="fixed" class="${m.follow ? '' : 'on'}">Fixed shot</button><button data-v="follow" class="${m.follow ? 'on' : ''}">Follows player</button></div></div>` : ''}
     ${m.face != null && m.kind !== 'door' ? `<div class="field"><span class="lbl">${m.kind === 'camera' ? 'Looks toward' : 'Faces'} · <span class="mono">${dirName(m.face)} ${m.face}°</span></span>
       <div class="dial" id="mDial">${DIRS.map(d => d ? `<button data-v="${d[1]}" class="${dirName(m.face) === d[0] ? 'on' : ''}">${d[0]}</button>` : '<span>·</span>').join('')}</div></div>` : ''}
     ${['decoration', 'item', 'note'].includes(m.kind) ? `<label class="row note" style="align-items:center;gap:6px;flex:0"><input type="checkbox" id="mHasFace" ${m.face != null ? 'checked' : ''} style="flex:0 0 auto;width:auto"> Has a front</label>` : ''}
@@ -561,6 +562,7 @@ function renderInspector() {
   if ($('mTo')) { $('mTo').value = m.to || ''; $('mTo').onchange = e => { m.to = e.target.value; touch(); drawPlan(); }; }
   if ($('mWidth')) { $('mWidth').value = m.width || (m.kind === 'path' ? 10 : 12); $('mWidth').oninput = e => { m.width = +e.target.value || m.width; touch(); drawPlan(); }; }
   if ($('mW')) { $('mW').value = m.w; $('mD').value = m.d; $('mW').oninput = e => { m.w = Math.max(4, +e.target.value || 4); touch(); drawPlan(); }; $('mD').oninput = e => { m.d = Math.max(4, +e.target.value || 4); touch(); drawPlan(); }; }
+  if ($('mFollow')) $('mFollow').querySelectorAll('button').forEach(b => b.onclick = () => { m.follow = b.dataset.v === 'follow'; touch(); renderInspector(); drawPlan(); });
   for (const [id, key] of [['mSize', 'size'], ['mHeight', 'height']]) if ($(id)) $(id).querySelectorAll('button').forEach(b => b.onclick = () => { m[key] = b.dataset.v; touch(); renderInspector(); drawPlan(); });
   if ($('mDial')) $('mDial').querySelectorAll('button').forEach(b => b.onclick = () => { m.face = +b.dataset.v; touch(); renderInspector(); drawPlan(); });
   if ($('mHasFace')) $('mHasFace').onchange = e => { m.face = e.target.checked ? 0 : null; touch(); renderInspector(); drawPlan(); };
@@ -610,7 +612,7 @@ function briefText() {
     const sec = (title, list, fmt) => { if (list.length) { out.push('', `### ${title}`); list.forEach(m => out.push(fmt(m))); } };
     sec('Player start', by('spawn'), m => `- ${m.label || 'Start'} at ${where(m)}${face(m)}${det(m)}`);
     sec('Doors and exits', by('door'), m => `- ${m.label || 'Door'} on the ${({ N: 'north', S: 'south', E: 'east', W: 'west' })[m.edge]} edge at ${m.edge === 'N' || m.edge === 'S' ? 'x ' + m.x : 'z ' + m.z}, ${m.width || 12} wide → ${m.to ? (rooms[m.to] ? rooms[m.to].name + ' (' + m.to + ')' : m.to) : 'not linked yet'}${det(m)}`);
-    sec('Cameras', by('camera'), m => `- ${m.label || 'Camera'} at ${where(m)} looking ${dirName(m.face || 0)}: yaw ${yawOf(m.face || 0)}, tilt ${HEIGHTS[m.height || 'medium']} (${m.height || 'medium'} height)${det(m)}`);
+    sec('Cameras', by('camera'), m => `- ${m.label || 'Camera'} at ${where(m)} looking ${dirName(m.face || 0)}: yaw ${yawOf(m.face || 0)}, tilt ${HEIGHTS[m.height || 'medium']} (${m.height || 'medium'} height), ${m.follow ? 'follows the player' : 'fixed shot'}${det(m)}`);
     sec('NPCs', by('npc'), m => `- ${m.label || 'NPC'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);
     sec('Enemies', by('enemy'), m => `- ${m.label || 'Enemy'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);
     sec('Interactables', by('item'), m => `- ${m.label || 'Interactable'} at ${where(m)}${face(m)}, ${SIZES[m.size || 'M'].toLowerCase()}${det(m)}`);

@@ -60,6 +60,7 @@ Build characters before the game; the game reads their atlases from `out/`.
 - **Wall segments:** walls split into 16-unit segments. Doors and windows must sit inside one segment (e.g. 50–62 or 66–78). Doors are 12 wide.
 - **Room sizes:** for the 1920×1080 view, a cosy room is about 140 × 105 and a garden about 220 × 150. Big outdoor rooms need several camera zones.
 - **Thin flat parts:** keep them level, never slightly tilted, or plank stripes appear. Wings and capes are vertical membranes.
+- **Cameras:** fixed shots by default; `follow=True` slides after the player at the same angle. The camera code separates settings from a live pose so a turning mode can be added later (see `prototype/README.md`).
 - **Animation:** every frame is the character rebuilt with a pose. Use the presets in `gait.py` and `cast.py`. With no pose, `build()` must produce the approved standing model exactly.
 
 ## The Room Planner

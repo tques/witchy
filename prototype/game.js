@@ -47,24 +47,66 @@ const S = {
 const P = S.player;
 
 // ------------------------------------------------------------------ camera / projection
+// A camera is its settings (rooms.py: zone, yaw, tilt, zoom, target, follow) plus a live POSE
+// {yaw, tilt, S, tx, tz} that updateCamera() advances every frame. Everything that draws or picks reads the pose.
+// Modes:
+//   fixed   the pose is the settings: a composed shot (interiors, set pieces)
+//   follow  the pose slides after the player; the angle never changes, so cached stack images stay valid
+// A later 'turn' mode would ease pose.yaw as well. Only updateCamera() needs to change; proj/unproj, the floor and
+// the dead zone already work at any angle. Stack images are cached per (yaw, tilt, zoom), so a turning camera should
+// round pose.yaw (e.g. to 3 degrees) before drawing and keep the cache bounded.
 const VIEW_SCALE = 1.5;                 // on-screen size: 1.5x the original 960x600 framing, for a 1920x1080 canvas
+const FOLLOW = { dead: [0.16, 0.14], ease: 5 };   // dead zone (fraction of the screen), how quickly it catches up
+const GROUND_MARGIN = 560;              // outdoor ground (and neighbours' scenery) painted this far past the edges: enough to fill
+                                        // the screen when a following camera reaches a corner
 function setCamera(c) {
-  S.cam = { ...c, c: Math.cos(c.yaw * deg), s: Math.sin(c.yaw * deg), sn: Math.sin(c.tilt * deg), cs: Math.cos(c.tilt * deg),
-            S: c.zoom * VIEW_SCALE, tx: c.target[0], tz: c.target[1] };
+  const f = c.follow ? (c.follow === true ? {} : c.follow) : null;
+  S.cam = { src: c, mode: f ? 'follow' : 'fixed', follow: f, yaw: c.yaw, tilt: c.tilt, S: c.zoom * VIEW_SCALE, tx: c.target[0], tz: c.target[1] };
+  if (f) [S.cam.tx, S.cam.tz] = followGoal(true);        // a cut lands centred on her
+  posePrep();
+}
+function posePrep() {                                    // trig + a whole-pixel screen offset for the current pose
+  const k = S.cam;
+  k.c = Math.cos(k.yaw * deg); k.s = Math.sin(k.yaw * deg); k.sn = Math.sin(k.tilt * deg); k.cs = Math.cos(k.tilt * deg);
+  k.ox = Math.round(k.S * (k.tx * k.c - k.tz * k.s));             // snapping keeps pixel art from shimmering as it slides
+  k.oy = Math.round(k.S * (k.tx * k.s + k.tz * k.c) * k.sn);
 }
 function proj(x, z, h = 0) {
-  const k = S.cam, dx = x - k.tx, dz = z - k.tz;
-  const xr = dx * k.c - dz * k.s, zr = dx * k.s + dz * k.c;
-  return [CX + k.S * xr, CY + k.S * zr * k.sn - h * k.S * k.cs, zr];
+  const k = S.cam, xr = x * k.c - z * k.s, zr = x * k.s + z * k.c;
+  return [CX + k.S * xr - k.ox, CY + k.S * zr * k.sn - k.oy - h * k.S * k.cs, zr];
 }
 function unproj(X, Y) {
-  const k = S.cam, xr = (X - CX) / k.S, zr = (Y - CY) / (k.S * k.sn);
-  return [k.tx + xr * k.c + zr * k.s, k.tz - xr * k.s + zr * k.c];
+  const k = S.cam, xr = (X - CX + k.ox) / k.S, zr = (Y - CY + k.oy) / (k.S * k.sn);
+  return [xr * k.c + zr * k.s, -xr * k.s + zr * k.c];
+}
+function followGoal(instant) {
+  // where the camera centre wants to be: wherever keeps the player inside the dead zone (measured on screen, so
+  // it holds at any yaw), limited to the camera's bounds (the room by default)
+  const k = S.cam, f = k.follow || {};
+  let gx = P.x, gz = P.z;
+  if (!instant) {
+    const dx = P.x - k.tx, dz = P.z - k.tz;
+    const sx = k.S * (dx * k.c - dz * k.s), sy = k.S * (dx * k.s + dz * k.c) * k.sn;     // player offset on screen
+    const [fx, fy] = f.dead || FOLLOW.dead, hx = VW * fx, hy = VH * fy;
+    const ex = sx - Math.max(-hx, Math.min(hx, sx)), ey = sy - Math.max(-hy, Math.min(hy, sy));
+    const xr = ex / k.S, zr = ey / (k.S * k.sn);                                          // back to the ground
+    gx = k.tx + xr * k.c + zr * k.s; gz = k.tz - xr * k.s + zr * k.c;
+  }
+  const [x0, z0, x1, z1] = f.bounds || [0, 0, S.room.size[0], S.room.size[1]];
+  return [Math.max(x0, Math.min(x1, gx)), Math.max(z0, Math.min(z1, gz))];
+}
+function updateCamera(dt) {
+  const k = S.cam;
+  if (k.mode === 'follow') {
+    const [gx, gz] = followGoal(false), t = 1 - Math.exp(-dt * ((k.follow && k.follow.ease) || FOLLOW.ease));
+    k.tx += (gx - k.tx) * t; k.tz += (gz - k.tz) * t;
+  }
+  posePrep();
 }
 function pickCamera() {
   const cams = S.room.cameras;
   const c = cams.find(c => c.zone && P.x >= c.zone[0] && P.x < c.zone[2] && P.z >= c.zone[1] && P.z < c.zone[3]) || cams.find(c => !c.zone) || cams[0];
-  if (!S.cam || S.cam.src !== c) { setCamera(c); S.cam.src = c; }
+  if (!S.cam || S.cam.src !== c) setCamera(c);           // crossing into another zone cuts to its camera
 }
 
 // ------------------------------------------------------------------ floor painting (one texel per cube)
@@ -114,7 +156,7 @@ function paintDecals(room, ox, oz, set, jit, K, r) {     // rugs, paths, clearin
   }
 }
 function paintFloor(room) {
-  const [W, D] = room.size, outdoor = room.floor.style !== 'wood', M = outdoor ? 220 : 0, K = room.floor.scale || 1;
+  const [W, D] = room.size, outdoor = room.floor.style !== 'wood', M = outdoor ? GROUND_MARGIN : 0, K = room.floor.scale || 1;
   const c = document.createElement('canvas'); c.width = W + 2 * M; c.height = D + 2 * M;
   const g = c.getContext('2d'), img = g.createImageData(c.width, c.height), d = img.data, r = rng(7);
   const set = (x, y, col) => { x = Math.round(x + M); y = Math.round(y + M); if (x < 0 || y < 0 || x >= c.width || y >= c.height) return; const i = (y * c.width + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255; };
@@ -259,7 +301,7 @@ function enterRoom(id, spawn, face) {
   S.npcs = (room.npcs || []).map(n => ({ ...n, x: n.pos[0], z: n.pos[1], heading: n.face, home: [...n.pos], anim: 'stand', phase: 0, path: [], wait: 1 + Math.random() * 2 }));
   S.context = [];                                         // neighbours' fences, walls and props, seen past the edges
   for (const nb of room.neighbors || []) {
-    const other = DATA.rooms[nb.id], M = 220, [W, D] = room.size;
+    const other = DATA.rooms[nb.id], M = GROUND_MARGIN, [W, D] = room.size;
     for (const o of other.objects) {
       const x = o.pos[0] + nb.off[0], z = o.pos[1] + nb.off[1];
       if (x < -M || z < -M || x > W + M || z > D + M) continue;          // only what's near enough to see
@@ -550,7 +592,7 @@ function tick(now) {
   if (!S.fading && (!S.dialog.length || P.once)) step(dt);       // casts keep playing under dialogue
   if (!S.fading) stepNpcs(dt);
   if (S.mana < S.maxMana && !P.busy) { S.mana = Math.min(S.maxMana, S.mana + dt * 0.8); if (Math.random() < 0.05) updateQuest(); }
-  pickCamera(); updateFx(dt); render();
+  pickCamera(); updateCamera(dt); updateFx(dt); render();
   requestAnimationFrame(tick);
 }
 

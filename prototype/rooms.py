@@ -15,8 +15,11 @@ Each room:
   npcs        dict(asset, pos, face, bob, interact={...})
   exits       dict(rect=(x0, z0, x1, z1), to=room, spawn=(x, z), face=degrees)
               face: 0 = facing south (+z, toward the camera side), 90 = west, 180 = north, 270 = east
-  cameras     dict(zone=(x0, z0, x1, z1) or None, yaw, tilt, zoom, target=(x, z))
-              zoom is screen pixels per BASE unit
+  outskirts   'trees': plant a look-only border of trees (bushes on the camera's south side) just outside the room
+  cameras     dict(zone=(x0, z0, x1, z1) or None, yaw, tilt, zoom, target=(x, z), follow=False)
+              zoom is screen pixels per BASE unit (before game.js VIEW_SCALE)
+              follow=True: the camera slides after the player inside its zone (same angle); otherwise it is a fixed shot.
+              follow can also be dict(dead=(fx, fy), ease=5, bounds=(x0, z0, x1, z1)) to tune it
 """
 import math
 
@@ -61,7 +64,7 @@ ROOMS = {
                  dict(zone=(110, 0, 220, 150), yaw=38, tilt=30, zoom=4.0, target=(158, 75))],
     ),
     'forest': dict(
-        name='Forest Clearing', size=(188, 150),
+        name='Forest Clearing', size=(188, 150), outskirts='trees',
         floor=dict(style='forest', decals=[dict(kind='clearing', center=(102, 75), radius=52),
                                            dict(kind='path', points=[(0, 75), (45, 75), (72, 72)], width=14)]),
         props=[dict(asset='tree', pos=(22, 22), block=(6, 6)), dict(asset='tree2', pos=(68, 10), block=(6, 6)),
@@ -79,7 +82,7 @@ ROOMS = {
         cameras=[dict(zone=None, yaw=-22, tilt=29, zoom=4.0, target=(98, 72))],
     ),
     'field': dict(
-        name='Field', size=(350, 240),
+        name='Field', size=(350, 240), outskirts='trees',
         floor=dict(style='meadow', decals=[]),
         props=[# from the planner, scaled to the larger field
                dict(asset='stump', pos=(91, 92), block=(8, 8),
@@ -110,7 +113,7 @@ ROOMS = {
                    interact=dict(id='wizard', label='Talk to the wizard', at=(262, 140)))],
         exits=[dict(rect=(52, 0, 82, 12), to='garden', spawn=(88, 130), face=180, label='Back to the garden')],
         # two halves, each seen from its southern corner (from the planner)
-        cameras=[dict(zone=(0, 0, 174, 240), yaw=-45, tilt=32, zoom=3.6, target=(87, 120)),     # A: south-west corner, looking north-east
-                 dict(zone=(174, 0, 350, 240), yaw=45, tilt=32, zoom=3.6, target=(262, 120))],  # B: south-east corner, looking north-west
+        cameras=[dict(zone=(0, 0, 174, 240), yaw=-45, tilt=32, zoom=4.0, target=(87, 120), follow=True),     # A: south-west corner, looking north-east
+                 dict(zone=(174, 0, 350, 240), yaw=45, tilt=32, zoom=4.0, target=(262, 120), follow=True)],  # B: south-east corner, looking north-west
     ),
 }

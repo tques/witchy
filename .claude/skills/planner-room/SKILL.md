@@ -27,7 +27,7 @@ Everything is in base units, the same as the planner: x east, z south, facing 0 
 | NPC / Enemy | `npcs` entry: `asset`, `pos`, `face`, `interact`. Use `wander=dict(radius, pause)` if they wander. Needs a character; use the `spritestack-character` skill if it doesn't exist. |
 | Door / exit | `exits` entry: a `rect` on that edge, `to`, `spawn` and `face` in the target room. Add the matching exit in the target room (e.g. a gap in its fence) and point its spawn back here. |
 | Player start | `start` and `start_face` (only the first room uses them) |
-| Camera (+ its zone area) | `cameras` entry: `yaw = 180 − facing`, tilt low 26 / medium 32 / high 38, `zone` from the matching area, `target` near the zone's middle, zoom about 3.6–4.4 (smaller for bigger zones) |
+| Camera (+ its zone area) | `cameras` entry: `yaw = 180 − facing`, tilt low 26 / medium 32 / high 38, `zone` from the matching area, `target` near the zone's middle, zoom about 3.6–4.4 (smaller for bigger fixed zones). A marker set to "Follows player" gets `follow=True`; such a zone can be any size and zoom 4.0 works well. |
 | Area (rug, clearing) | `floor.decals` (`rug`, `clearing`) or a prop |
 | Path | `floor.decals` `path` with `points` and `width` |
 | Room edges | indoors: `walls` (doors and windows inside one 16-unit segment); fence: `fences`; trees: trees on the far side, low bushes on the cameras' sides |
@@ -39,7 +39,8 @@ Everything is in base units, the same as the planner: x east, z south, facing 0 
 - Keep flat parts level, as the pond's water does.
 
 **Big rooms:**
-- Split the cameras into zones of roughly 90–140 × 96–120 base units, so the player can't walk out of view.
+- Use following cameras, or split fixed cameras into zones of roughly 90–140 × 96–120 base units so the player can't walk out of view.
+- Outdoor rooms with following cameras should get `outskirts='trees'` so the edges never show bare ground.
 - Add scenery so the room doesn't feel empty, and label your additions "Added by Claude" in the planner.
 
 **Neighbours:** outdoor rooms show their outdoor neighbours past their edges. `build_game.py` lines up linked exits gate to gate and prints the offsets. Don't put tall props against an edge a neighbour's fence already borders. A neighbour's fence only covers its own length.

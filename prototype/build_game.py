@@ -75,6 +75,7 @@ def scale_room(r, k):
     for c in r['cameras']:
         c['target'] = sc(c['target']); c['zoom'] = c['zoom'] / k
         if c.get('zone'): c['zone'] = sc(c['zone'])
+        if isinstance(c.get('follow'), dict) and c['follow'].get('bounds'): c['follow'] = dict(c['follow'], bounds=sc(c['follow']['bounds']))
     for d in r['floor'].get('decals', []):
         for key in ('rect', 'center'):
             if key in d: d[key] = sc(d[key])
@@ -83,6 +84,40 @@ def scale_room(r, k):
         if 'points' in d: d['points'] = [sc(p) for p in d['points']]
     r['floor']['scale'] = k
     return r
+
+
+def outskirts(rid, r, nbs):
+    """Scenery planted just outside a room's walkable area (rooms.py: outskirts='trees'), so a following camera
+    that reaches an edge sees a border instead of empty ground. Trees along the north, east and west edges;
+    low bushes and rocks along the south (camera) side so nothing tall stands between the camera and the player.
+    Skips anything that would land inside a neighbouring room or in front of an exit. Look-only: outside the
+    walkable area, so it blocks nothing. Positions are deterministic per room."""
+    import random
+    if r.get('outskirts') != 'trees':
+        return []
+    rng = random.Random(rid)
+    W, D = r['size']; k = WORLD_SCALE
+    nb_rects = [(n['off'][0] / k, n['off'][1] / k, n['off'][0] / k + ROOMS[n['id']]['size'][0], n['off'][1] / k + ROOMS[n['id']]['size'][1]) for n in nbs]
+    exits = [((e['rect'][0] + e['rect'][2]) / 2, (e['rect'][1] + e['rect'][3]) / 2) for e in r['exits']]
+    out = []
+    def plant(x, z, south):
+        if any(x0 - 10 <= x <= x1 + 10 and z0 - 10 <= z <= z1 + 10 for x0, z0, x1, z1 in nb_rects):
+            return
+        if any(abs(x - ex) < 34 and abs(z - ez) < 34 for ex, ez in exits):
+            return
+        asset = rng.choice(['bush', 'bush2', 'bush', 'rocks']) if south else rng.choice(['tree', 'tree2', 'tree', 'bush2'])
+        out.append(dict(asset=asset, pos=[x * k, z * k], scenery=True))
+    for edge in 'NSEW':
+        length = W if edge in 'NS' else D
+        t = rng.uniform(4, 16)
+        while t < length + 30:
+            depth = rng.uniform(10, 34) if edge != 'S' else rng.uniform(8, 18)
+            if edge == 'N': plant(t - 15, -depth, False)
+            if edge == 'S': plant(t - 15, D + depth, True)
+            if edge == 'W': plant(-depth, t - 15, False)
+            if edge == 'E': plant(W + depth, t - 15, False)
+            t += rng.uniform(22, 32) if edge != 'S' else rng.uniform(26, 40)
+    return out
 
 
 def main():
@@ -164,6 +199,7 @@ def main():
                 off = {'S': (ex - fx, D), 'N': (ex - fx, -D2), 'E': (W, ez - fz), 'W': (-W2, ez - fz)}[ea]
                 nbs.append(dict(id=e['to'], off=[off[0] * WORLD_SCALE, off[1] * WORLD_SCALE]))
         rooms[rid]['neighbors'] = nbs
+        rooms[rid]['objects'] += outskirts(rid, r, nbs)
         rooms[rid]['id'] = rid
         if nbs:
             print(f'  {rid} sees ' + ', '.join(f"{n['id']} at ({n['off'][0] / WORLD_SCALE:g}, {n['off'][1] / WORLD_SCALE:g})" for n in nbs))
