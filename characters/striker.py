@@ -1,8 +1,7 @@
-"""Striker: an alien warrior who plays grav-ball, a futuristic armoured football.
+"""Striker: an alien warrior who plays grav-ball, a futuristic full-contact football.
 Designed directly in the house style (no source sprite): green-skinned alien with big amber
-eyes and small tusks, a horned helmet with a tall crest, heavy shoulder pads, a chest plate
-with a glowing chevron, armoured greaves and cleated boots, carrying a glowing plasma ball.
-Same scale and proportions as the witch."""
+eyes in a sports helmet (glossy shell, ear pods, face cage), angular team-kit armour in matte
+black and hazard orange, and glowing neon seams and number. Same scale as the witch."""
 import math
 import numpy as np
 from spritestack import hexc
@@ -15,12 +14,13 @@ GRID = (72, 90, 48)
 ANIMATIONS = {'walk': dict(stride=5.0, arm=2.0), 'run': {}}   # a heavier, planted walk
 
 SKIN, SKIN_FACE = (122, 186, 140), (112, 174, 132)
-TUSK = (238, 230, 206)
-ARMOR, ARMOR_D = (178, 44, 52), (132, 30, 42)            # team crimson
-METAL, METAL_D = (186, 192, 208), (120, 126, 146)        # silver plating
-SUIT, SUIT_IN = (44, 40, 66), (22, 18, 36)               # dark under-suit
-CREST, CREST_D = (236, 178, 58), (196, 128, 36)          # gold crest
-PLASMA, CHEVRON = (120, 236, 255), (110, 226, 250)
+SHELL = (44, 46, 62)                                     # glossy black helmet / armour
+PLATE, PLATE_D = (62, 66, 86), (36, 38, 52)              # gunmetal plates and seams
+TEAM, TEAM_D = (240, 116, 36), (190, 78, 28)             # hazard orange
+CAGE = (168, 174, 190)                                   # face cage bars
+SUIT, SUIT_IN = (30, 30, 44), (14, 12, 22)               # under-suit
+GLOVE = (74, 78, 98)
+NEON = (96, 236, 255)                                    # glowing seams
 
 # big amber alien eyes with a dark slit (inner column first, mirrored for the other eye)
 EYE = [["2a1a12", "2a1a12", "2a1a12", "2a1a12"],
@@ -37,101 +37,107 @@ def build(m, sprite, pose=None):
     cx = CX
     g = gait(pose)
     g.apply(m, pivot_y=FEET)
-    tr = g.trail
     face_z = int(zc + 6)
-    ball_dz, ball_dy = g.prop_arm(1), g.arm_lift(1)
 
-    # --- 1. prop: the plasma ball, tucked in his screen-right hand, with silver end caps
-    bx, by, bz = cx + 15.5, 56 + ball_dy, zc + 4 + ball_dz
+    def slab(y0, y1, a, b, cz=zc, x0=cx, n=4.0):
+        """Rounded-square layers (superellipse): machined, not organic. a, b may vary by row."""
+        out = np.zeros(m.occ.shape, bool)
+        for y in range(max(y0, 0), min(y1, m.H)):
+            ay, by_ = (a(y) if callable(a) else a), (b(y) if callable(b) else b)
+            czy = cz(y) if callable(cz) else cz
+            out[y] = (np.abs(X[y] - x0) / ay) ** n + (np.abs(Z[y] - czy) / by_) ** n <= 1
+        return out
+
+    def neon(mask):
+        m.col[mask] = NEON
+        m.part[mask] = m.pid('neon')
+
+    # --- 1. face cage (in front of the face, below the eyes)
+    fz = face_z + 2.2
+    for y in (37.5, 40.5):
+        m.put(m.cylinder((cx - 6.5, y, fz), (cx + 6.5, y, fz), 0.8), CAGE, 'cage')
+    m.put(m.cylinder((cx, 36.5, fz), (cx, 41.5, fz), 0.8), CAGE, 'cage')
     for s in (-1, 1):
-        m.put(m.ell(bx + s * 4.2, by, bz, 1.6, 2.2, 2.2), METAL, 'metal')
-    m.put(m.ell(bx, by, bz, 5.6, 3.6, 3.6), PLASMA, 'plasma'); m.glow('plasma')
-    m.col[m.is_part('plasma') & (np.abs(X - bx) < 0.6)] = (230, 255, 255)   # seam band
+        m.put(m.capsule((cx + 6.5 * s, 37.5, fz), (cx + 9.5 * s, 34, zc + 3), 0.8), CAGE, 'cage')
+        m.put(m.capsule((cx + 6.5 * s, 40.5, fz), (cx + 9.5 * s, 36, zc + 3), 0.8), CAGE, 'cage')
 
     # --- 2. head with flat face plate
     m.put(m.ell(cx, 32, zc + 1, 8.5, 8.5, 7.5) & (Z <= face_z), SKIN, 'skin')
-    # small tusks at the jaw corners
-    for s in (-1, 1):
-        m.put(m.strand((cx + s * 4.5, 37.5, face_z - 0.5), (cx + s * 5.5, 40, face_z + 1.0), (cx + s * 4.8, 38.6, face_z + 2.2), 1.2, 0.5),
-              TUSK, 'tusk')
 
-    # --- 3. helmet: shell open at the face, cheek guards, horns and a tall crest
-    shell = m.ell(cx, 30, zc - 0.5, 10.4, 10.2, 9.4) & ~((Z > zc + 1) & (Y > 26.5) & (np.abs(X - cx) < 7.2))
+    # --- 3. helmet: glossy shell open at the face, ear pods with glowing rings, team stripe
+    for s in (-1, 1):
+        ex = cx + 10.2 * s
+        m.put(m.cylinder((ex - 1.0 * s, 32.5, zc + 1), (ex + 1.2 * s, 32.5, zc + 1), 3.4), PLATE, 'pod')
+    pods = m.is_part('pod')
+    r = np.sqrt((Y - 32.5) ** 2 + (Z - zc - 1) ** 2)
+    neon(pods & (np.abs(X - cx) > 10.5) & (r > 2.0) & (r < 2.9))
+    shell = m.ell(cx, 30, zc - 0.5, 10.2, 10.4, 9.6) & ~((Z > zc + 1) & (Y > 25.5) & (np.abs(X - cx) < 7.2))
     shell &= Y < 39
-    helm = m.put(shell, ARMOR, 'helm')
-    m.col[helm & (Y >= 24) & (Y <= 25)] = METAL                           # flat silver band
-    m.col[helm & (Y < 24) & (np.abs(X - cx) < 1.6) & (Z > zc)] = METAL     # brow ridge stripe
-    for s in (-1, 1):                                                     # cheek guards
-        m.put(m.ell(cx + s * 8.6, 33, zc + 2.5, 2.4, 5.5, 4.2), METAL, 'metal')
-        m.put(m.strand((cx + s * 9.5, 23, zc + 1), (cx + s * 15, 22, zc + 1), (cx + s * 16, 15, zc + 0.5), 2.2, 0.7),
-              METAL, 'metal')                                             # curved horns
-    crest = m.membrane((cx, 22, zc + 7), 90,
-                       [(8, -4, 9.5, 6.5, -8), (15 + 2 * tr, -2 + tr, 6, 4.5, -20)], thickness=2.4)
-    cm = crest['mask'] & (Y < 24)
-    m.put(cm, CREST, 'crest')
-    m.col[cm & (crest['rr'] > 0.80)] = CREST_D
-    m.smooth_surface(cm, 'crest', crest['normal'], two_sided=True)
+    helm = m.put(shell, SHELL, 'helm')
+    stripe = (Y < 25) | (Z < zc - 1)                                      # over the top and down the back
+    m.col[helm & (np.abs(X - cx) < 2.2) & stripe] = TEAM               # centre stripe
+    m.col[helm & (np.abs(np.abs(X - cx) - 3.2) < 0.5) & stripe] = TEAM_D
+    neon(helm & (Y >= 24.5) & (Y <= 25.4) & (Z > zc + 1))                # brow light strip
 
-    # --- 4. shoulder pads (gridiron pads, warrior pauldrons) with silver rims
+    # --- 4. shoulder pads: angular, level-topped slabs in team orange with neon edges
     for s in (-1, 1):
-        px = cx + s * 9.5
-        pad = m.ell(px, 42, zc, 6.0, 4.2, 6.2) & (Y <= 44)
-        m.put(m.ell(px, 42.5, zc, 6.8, 4.2, 6.9) & (Y >= 44) & (Y <= 45), METAL, 'metal')
-        p = m.put(pad, ARMOR, 'pads')
-        m.col[p & (np.abs(X - (px + s * 1.5)) < 0.7)] = METAL_D           # flat ridge stripe
+        px = cx + 9.8 * s
+        top = slab(40, 45, lambda y: 6.4 - 0.6 * max(0, 41 - y), lambda y: 6.6 - 0.6 * max(0, 41 - y), x0=px)
+        pad = m.put(top, TEAM, 'pads')
+        m.col[pad & (Y == 44)] = TEAM_D
+        neon(pad & (np.abs(X - cx) > 15.2) & (Y >= 42) & (Y <= 43))
+        m.put(slab(45, 47, 5.2, 5.6, x0=px), PLATE_D, 'underpad')
 
-    # --- 5. arms: dark suit sleeves, silver gauntlet cuffs, green hands
-    parts = ('sleeve', 'metal', 'sleeve_in', 'skin')
-    m.cuffed_arm((cx - 9, 44, zc), (cx - 13, 54 + g.arm_lift(-1), zc + 1 + g.arm(-1)), SUIT, METAL, SKIN, SUIT_IN, parts,
-                 sleeve_r=3.0, cuff_r=3.9, open_r=2.5, hand_r=2.5)
-    m.cuffed_arm((cx + 9, 44, zc), (cx + 12, 51 + ball_dy, zc + 2.5 + ball_dz), SUIT, METAL, SKIN, SUIT_IN, parts,
-                 sleeve_r=3.0, cuff_r=3.9, open_r=2.5, hand_r=2.5)
-
-    # --- 6. back: a power pack with two glowing vents between the shoulder pads
-    pack = m.put(m.ell(cx, 46, zc - 6.5, 5.0, 3.6, 2.6), METAL_D, 'pack')
+    # --- 5. arms: black suit, orange gauntlets, armoured gloves
+    parts = ('sleeve', 'gaunt', 'sleeve_in', 'glove')
     for s in (-1, 1):
-        m.put(m.cylinder((cx + 2.4 * s, 44, zc - 8.7), (cx + 2.4 * s, 48, zc - 8.7), 1.0), PLASMA, 'vent')
-    m.glow('vent')
+        m.cuffed_arm((cx + 9.5 * s, 44, zc), (cx + 12.5 * s, 54 + g.arm_lift(s), zc + 1 + g.arm(s)),
+                     SUIT, TEAM, GLOVE, SUIT_IN, parts, sleeve_r=3.0, cuff_r=3.9, open_r=2.5, hand_r=2.6)
 
-    # --- torso: chest plate over the suit, belt, shorts
+    # --- 6. back: power pack with two glowing vents
+    for s in (-1, 1):
+        m.put(m.cylinder((cx + 2.3 * s, 44.5, zc - 9.0), (cx + 2.3 * s, 49.5, zc - 9.0), 0.9), NEON, 'neon')
+    m.put(slab(43, 51, 4.6, 2.2, cz=zc - 6.8), PLATE_D, 'pack')
+
+    # --- 7. torso: machined chest plate, segmented abdomen, belt, hips
     m.put(m.ell(cx, 41, zc, 5.5, 2.5, 5), SUIT, 'suit')                   # neck seal
-    rx = lambda y: 9.2 - 0.12 * max(0, y - 46)
-    rz = lambda y: 6.4 - 0.06 * max(0, y - 46)
-    chest = m.put(m.lathe(cx, zc, 42, 61, rx, rz), ARMOR, 'chest')
+    chest = m.put(slab(42, 53, lambda y: 9.3 - 0.1 * max(0, y - 46), 6.5), PLATE, 'chest')
+    abs_ = m.put(slab(53, 61, lambda y: 7.8 - 0.05 * (y - 53), 5.8), SHELL, 'abs')
     front = chest & (Z > zc + 2)
-    # glowing chevron on the chest
-    v = front & (np.abs((Y - 46) - 0.8 * np.abs(X - cx)) < 1.1) & (np.abs(X - cx) < 6)
-    m.col[v] = CHEVRON; m.part[v] = m.pid('chevron'); m.glow('chevron')
-    # abdomen panel recessed between flat silver trim
-    panel = front & (np.abs(X - cx) <= 3.2) & (Y >= 53) & (Y <= 58)
-    m.col[front & (np.abs(np.abs(X - cx) - 4.2) < 0.7) & (Y >= 52) & (Y <= 59)] = METAL
-    m.col[panel] = ARMOR_D
-    m.recess_panel(panel, ARMOR_D, range(53, 59), edge_color=SUIT_IN)
-    # team number 7 on the back, flat silver
-    back = chest & (Z < zc - 2)
-    seven = ((Y >= 52) & (Y <= 53) & (np.abs(X - cx) <= 3)) | \
-            ((Y > 53) & (Y <= 59) & (np.abs(X - (cx + 2.5 - 0.6 * (Y - 53))) < 1.0))
-    m.col[back & seven] = METAL
-    m.put(m.lathe(cx, zc, 61, 64, lambda y: 8.4, lambda y: 6.0), METAL_D, 'belt')
-    m.put(m.ell(cx, 62.5, zc + 6, 2.0, 1.6, 1), PLASMA, 'buckle'); m.glow('buckle')
-    m.put((m.lathe(cx, zc, 64, 71, lambda y: 8.0 - 0.1 * (y - 64), lambda y: 5.8) & (Y < 71)), SUIT, 'shorts')
+    m.col[front & (np.abs(X - cx) > 5.5) & (Y >= 44)] = TEAM               # orange side panels
+    neon(front & (np.abs(np.abs(X - cx) - 5.0) < 0.5) & (Y >= 44))        # neon seam between them
+    seven = ((Y >= 45) & (Y <= 46) & (np.abs(X - cx) <= 2.5)) | \
+            ((Y > 46) & (Y <= 51) & (np.abs(X - (cx + 1.8 - 0.6 * (Y - 46))) < 0.9))
+    neon(front & seven)                                                   # glowing number 7
+    m.col[abs_ & ((Y == 55) | (Y == 58))] = PLATE_D                       # plate seams
+    m.col[abs_ & (np.abs(X - cx) < 0.6) & (Z > zc)] = PLATE_D
+    m.col[chest & (Z < zc - 2) & (np.abs(X - cx) > 5.5) & (Y >= 44)] = TEAM   # orange back panels
+    seven_b = ((Y >= 53) & (Y <= 54) & (np.abs(X - cx) <= 2.5)) | \
+              ((Y > 54) & (Y <= 59) & (np.abs(X - (cx - 1.8 + 0.6 * (Y - 54))) < 0.9))   # mirrored: seen from behind
+    neon(abs_ & (Z < zc - 2) & seven_b)
+    m.put(slab(61, 63, 8.2, 6.0), PLATE_D, 'belt')
+    neon(m.is_part('belt') & (Y == 62) & (Z > zc + 3) & (np.abs(X - cx) < 2.5))
+    hips = m.put(slab(63, 70, lambda y: 8.0 - 0.12 * (y - 63), 5.8), SUIT, 'hips')
+    m.col[hips & (np.abs(np.abs(X - cx) - 7.0) < 0.9)] = TEAM             # side stripes
 
-    # --- 7. legs: armoured thigh plates, knee guards, silver greaves, cleated boots
+    # --- 8. legs: thigh plates, angular knee pads, shin guards with neon strips, chunky boots
     for s in (-1, 1):
         lx = cx + 4.2 * s
         dz, dy = g.foot(s)
         at = lambda f: (lx, 66 + 18 * f + dy * f, zc + dz * f)
-        m.put(m.ball(at(0.62), 2.9), METAL, 'metal')                      # knee guard
-        m.put(m.cylinder(at(0.68), at(0.92), 3.1), METAL, 'metal')         # greave
-        m.put(m.capsule(at(0.05), at(0.5), 3.4), ARMOR, 'legs')            # thigh plate
+        kx, ky, kz = at(0.6)
+        m.put(slab(int(round(ky - 2)), int(round(ky + 2)), 3.0, 2.6, cz=kz + 1.0, x0=kx), TEAM, 'knee')
+        shin = m.put(m.cylinder(at(0.68), at(0.95), 3.0), SHELL, 'shin')
+        neon(shin & (np.abs(X - lx) < 0.6) & (Z > zc + dz * 0.8 + 2))
+        m.put(m.cylinder(at(0.08), at(0.5), 3.3), PLATE, 'thigh')
         m.put(m.capsule(at(0.0), at(1.0), 2.6), SUIT, 'legs')
-        boot = m.ell(lx, 85 + dy, zc + 1.5 + dz, 3.6, 3.2, 4.8) & (Y <= FEET - 1 + dy)
-        m.put(boot, SUIT_IN, 'boots')
-        m.col[m.is_part('boots') & (Y < 84 + dy)] = ARMOR_D
-        sole = m.ell(lx, FEET - 1 + dy, zc + 1.5 + dz, 3.6, 1.2, 4.8) & (Y >= FEET - 1 + dy) & (Y <= FEET + dy)
-        m.put(sole, METAL_D, 'cleats')
+        b = m.put(slab(int(round(83 + dy)), int(round(FEET + dy)) + 1, 3.5, 4.6, cz=zc + 1.4 + dz, x0=lx), SHELL, 'boots')
+        m.col[b & (Y >= FEET - 1 + dy)] = TEAM_D
+        neon(b & (Y == int(round(FEET - 2 + dy))) & (Z > zc + dz + 4))
 
-    # --- 8. face paint: one skin tone on the plate, then the eyes
+    m.glow('neon')
+
+    # --- 9. face paint: one skin tone on the plate, then the eyes
     for y in range(24, 42):
         for x in range(int(cx) - 9, int(cx) + 10):
             z = m.front_z(y, x)
