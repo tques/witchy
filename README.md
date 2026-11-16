@@ -2,10 +2,14 @@
 
 Turn 2D pixel-art character sprites into sprite-stacked 3D models in one consistent house style. The reference character is the witch. The rules are in [STYLE_GUIDE.md](STYLE_GUIDE.md).
 
+**Using it from Claude Code:** open a session on this repo. `CLAUDE.md` tells Claude how everything fits together. The project skills in `.claude/skills/` handle the two main jobs:
+- `spritestack-character`: make a character from a sprite
+- `planner-room`: build a room from the Room Planner
+
 Requires Python 3 with `numpy`, `scipy` and `pillow`:
 
 ```bash
-pip install numpy scipy pillow
+pip install -r requirements.txt
 ```
 
 ## New character in 4 steps
