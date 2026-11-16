@@ -75,7 +75,25 @@ ROOMS = {
                dict(asset='thorns', pos=(232, 16), block=(17, 6)),
                dict(asset='crystal_dim', pos=(208, 50), block=(8, 8), swap='crystal_lit',
                     interact=dict(id='crystal', label='The dark crystal', at=(184, 74))),        # cast from a few steps away
-               *[dict(asset='mushroom', pos=p) for p in ((204, 90), (204, 144), (100, 142), (102, 90), (154, 36))]],   # ring round the fairy
+               *[dict(asset='mushroom', pos=p) for p in ((204, 90), (204, 144), (100, 142), (102, 90), (154, 36))],   # ring round the fairy
+               # added by Claude: trees only on the far north and east edges (nothing playable behind them from the
+               # south-west camera); everything inside the room is low so it never hides the witch
+               dict(asset='tree2', pos=(44, 4), block=(6, 6)), dict(asset='tree', pos=(146, 4), block=(6, 6)),
+               dict(asset='tree2', pos=(192, 4), block=(6, 6)), dict(asset='tree', pos=(266, 4), block=(6, 6)),
+               dict(asset='tree2', pos=(316, 92), block=(6, 6)), dict(asset='tree', pos=(316, 146), block=(6, 6)),
+               dict(asset='tree2', pos=(316, 208), block=(6, 6)),
+               dict(asset='fern', pos=(62, 42)), dict(asset='fern2', pos=(124, 30)), dict(asset='fern', pos=(242, 88)),
+               dict(asset='fern2', pos=(288, 168)), dict(asset='fern', pos=(42, 160)), dict(asset='fern2', pos=(140, 188)),
+               dict(asset='fern', pos=(232, 200)), dict(asset='fern2', pos=(66, 112)), dict(asset='fern', pos=(252, 148)),
+               dict(asset='fern2', pos=(20, 196)), dict(asset='fern', pos=(276, 70)),
+               dict(asset='bush', pos=(36, 206), block=(9, 9)), dict(asset='bush2', pos=(206, 210), block=(9, 9)),
+               dict(asset='bush', pos=(286, 112), block=(9, 9)),
+               dict(asset='rocks', pos=(122, 172), block=(7, 5)), dict(asset='rocks', pos=(282, 50), block=(7, 5)),
+               dict(asset='log', pos=(62, 140), block=(15, 5)), dict(asset='stump', pos=(232, 124), block=(8, 8)),
+               dict(asset='mushroom', pos=(30, 104)), dict(asset='mushroom_big', pos=(36, 109)),
+               dict(asset='mushroom', pos=(268, 34)), dict(asset='mushroom', pos=(273, 39)),
+               dict(asset='mushroom', pos=(168, 202)), dict(asset='mushroom_big', pos=(174, 207)),
+               dict(asset='wildflowers2', pos=(108, 48)), dict(asset='wildflowers', pos=(254, 186))],
         npcs=[dict(asset='fairy', pos=(152, 96), face=200, bob=3, interact=dict(id='fairy', label='Talk to the fairy', at=(152, 126)))],
         exits=[dict(rect=(0, 59, 10, 93), to='garden', spawn=(200, 78), face=90, label='Back to the garden')],
         cameras=[dict(zone=None, yaw=-45, tilt=26, zoom=4.0, target=(160, 110), follow=True)],   # south-west corner, low, follows

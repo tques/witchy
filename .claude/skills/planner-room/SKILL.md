@@ -42,6 +42,7 @@ Everything is in base units, the same as the planner: x east, z south, facing 0 
 - Use following cameras, or split fixed cameras into zones of roughly 90–140 × 96–120 base units so the player can't walk out of view.
 - Outdoor rooms with following cameras should get `outskirts='trees'` so the edges never show bare ground.
 - Add scenery so the room doesn't feel empty, and label your additions "Added by Claude" in the planner.
+- Keep sight lines clear: put trees and other tall props only on the edges the cameras look *towards*; inside the room and on the camera side use low props (ferns, bushes, rocks, mushrooms, logs, flowers). Check by standing the witch on a grid of walkable spots and counting which tall props cover her (see the occlusion check in this repo's history, `Forest Clearing scenery` commit).
 
 **Neighbours:** outdoor rooms show their outdoor neighbours past their edges. `build_game.py` lines up linked exits gate to gate and prints the offsets. Don't put tall props against an edge a neighbour's fence already borders. A neighbour's fence only covers its own length.
 

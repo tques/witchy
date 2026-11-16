@@ -88,8 +88,8 @@ def scale_room(r, k):
 
 def outskirts(rid, r, nbs):
     """Scenery planted just outside a room's walkable area (rooms.py: outskirts='trees'), so a following camera
-    that reaches an edge sees a border instead of empty ground. Trees along the north, east and west edges;
-    low bushes and rocks along the south (camera) side so nothing tall stands between the camera and the player.
+    that reaches an edge sees a border instead of empty ground. Trees along the edges the cameras look towards;
+    low bushes and rocks along any edge a camera looks from, so nothing tall stands between it and the player.
     Skips anything that would land inside a neighbouring room or in front of an exit. Look-only: outside the
     walkable area, so it blocks nothing. Positions are deterministic per room."""
     import random
@@ -107,16 +107,21 @@ def outskirts(rid, r, nbs):
             return
         asset = rng.choice(['bush', 'bush2', 'bush', 'rocks']) if south else rng.choice(['tree', 'tree2', 'tree', 'bush2'])
         out.append(dict(asset=asset, pos=[x * k, z * k], scenery=True))
+    import math
+    views = [(-math.sin(math.radians(c['yaw'])), -math.cos(math.radians(c['yaw']))) for c in r['cameras']]   # ground view directions
+    normals = {'N': (0, -1), 'S': (0, 1), 'E': (1, 0), 'W': (-1, 0)}
+    camera_side = {e: any(n[0] * vx + n[1] * vz < -0.2 for vx, vz in views) for e, n in normals.items()}
     for edge in 'NSEW':
         length = W if edge in 'NS' else D
         t = rng.uniform(4, 16)
         while t < length + 30:
-            depth = rng.uniform(10, 34) if edge != 'S' else rng.uniform(8, 18)
-            if edge == 'N': plant(t - 15, -depth, False)
-            if edge == 'S': plant(t - 15, D + depth, True)
-            if edge == 'W': plant(-depth, t - 15, False)
-            if edge == 'E': plant(W + depth, t - 15, False)
-            t += rng.uniform(22, 32) if edge != 'S' else rng.uniform(26, 40)
+            low = camera_side[edge]
+            depth = rng.uniform(8, 18) if low else rng.uniform(10, 34)
+            if edge == 'N': plant(t - 15, -depth, low)
+            if edge == 'S': plant(t - 15, D + depth, low)
+            if edge == 'W': plant(-depth, t - 15, low)
+            if edge == 'E': plant(W + depth, t - 15, low)
+            t += rng.uniform(26, 40) if low else rng.uniform(22, 32)
     return out
 
 

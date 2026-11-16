@@ -405,6 +405,21 @@ def log(seed=17):
     return p.done()
 
 
+def fern(seed=18):
+    """Low forest fern: a ring of arching fronds from a dark centre. Low, so it never hides the player."""
+    p = P(24, 10, 24)
+    m = p.m; cx, cz = p.cx, p.cz; r = _rng(seed)
+    greens = [(70, 140, 70), (88, 160, 80), (60, 124, 66), (104, 172, 92)]
+    n = 9
+    for i in range(n):
+        a = 2 * math.pi * i / n + r.uniform(-0.2, 0.2); L = r.uniform(8, 10.5)
+        ca, sa = math.cos(a), math.sin(a)
+        m.put(m.strand((cx, p.y(1), cz), (cx + ca * L * 0.45, p.y(r.uniform(7.5, 9.5)), cz + sa * L * 0.45),
+                       (cx + ca * L, p.y(r.uniform(1.5, 3)), cz + sa * L), 2.1, 0.7), greens[i % 4], 'frond')
+    m.put(m.ell(cx, p.y(1), cz, 2.5, 1.2, 2.5), (52, 96, 56), 'core')
+    return p.done()
+
+
 def wildflowers(seed=14):
     """A loose patch of mixed wild flowers on the grass (no bed): daisies, bluebells, poppies, buttercups."""
     p = P(28, 9, 22)
@@ -432,5 +447,5 @@ PROPS = {
     'mushroom': mushroom, 'mushroom_big': lambda: mushroom(seed=10, big=True), 'well': well, 'rocks': rocks,
     'signpost': signpost, 'crystal_dim': crystal, 'crystal_lit': lambda: crystal(lit=True), 'thorns': thorns,
     'fence_x': lambda: fence(24, 'x'), 'fence_z': lambda: fence(24, 'z'),
-    'stump': stump, 'wildflowers': wildflowers, 'wildflowers2': lambda: wildflowers(seed=21), 'boulder': boulder, 'pond': pond, 'log': log,
+    'stump': stump, 'wildflowers': wildflowers, 'wildflowers2': lambda: wildflowers(seed=21), 'boulder': boulder, 'pond': pond, 'log': log, 'fern': fern, 'fern2': lambda: fern(seed=23),
 }
